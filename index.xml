@@ -69,7 +69,7 @@ With Jekyll, something that looked like&lt;/p>
  ▾ images/
  logo.png
 &lt;/code>&lt;/pre>
-&lt;p>Additionally, you&amp;rsquo;ll want any files that should reside at the root (such as &lt;code>CNAME&lt;/code>) to be moved to &lt;code>static&lt;/code>.&lt;/p></description></item><item><title>Testdraft</title><link>https://Hyperbolica-dev.github.io/testdraft/</link><pubDate>Sun, 17 Nov 2024 11:30:26 +0800</pubDate><guid>https://Hyperbolica-dev.github.io/testdraft/</guid><description/></item><item><title>(Hu)go Template Primer</title><link>https://Hyperbolica-dev.github.io/posts/goisforlovers/</link><pubDate>Wed, 02 Apr 2014 00:00:00 +0000</pubDate><guid>https://Hyperbolica-dev.github.io/posts/goisforlovers/</guid><description>&lt;p>Hugo uses the excellent 
+&lt;p>Additionally, you&amp;rsquo;ll want any files that should reside at the root (such as &lt;code>CNAME&lt;/code>) to be moved to &lt;code>static&lt;/code>.&lt;/p></description></item><item><title>Testdraft</title><link>https://Hyperbolica-dev.github.io/testdraft/</link><pubDate>Sun, 17 Nov 2024 11:30:26 +0800</pubDate><guid>https://Hyperbolica-dev.github.io/testdraft/</guid><description>&lt;p>This is the Test draft. I just want to see the effect of the blog.&lt;/p></description></item><item><title>(Hu)go Template Primer</title><link>https://Hyperbolica-dev.github.io/posts/goisforlovers/</link><pubDate>Wed, 02 Apr 2014 00:00:00 +0000</pubDate><guid>https://Hyperbolica-dev.github.io/posts/goisforlovers/</guid><description>&lt;p>Hugo uses the excellent 
  &lt;a href="https://golang.org/">Go&lt;/a> 
  &lt;a href="https://golang.org/pkg/html/template/">html/template&lt;/a> library for
 its template engine. It is an extremely lightweight engine that provides a very
