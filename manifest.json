@@ -1,0 +1,15 @@
+{
+  "name": "Hyperbolica",
+  "short_name": "Hyperbolica",
+  "start_url": "/Hyperbolica-dev.github.io/",
+  "scope": "/Hyperbolica-dev.github.io/",
+  "display": "standalone",
+  "background_color": "#000000",
+  "theme_color": "#000000",
+  "icons": [
+    {
+      "src": "/Hyperbolica-dev.github.io/favicon.svg",
+      "sizes": "512x512"
+    }
+  ]
+}

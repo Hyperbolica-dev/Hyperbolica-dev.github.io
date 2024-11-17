@@ -1,0 +1,1 @@
+navigator.serviceWorker&&navigator.serviceWorker.register("/Hyperbolica-dev.github.io/sw.js",{scope:"/Hyperbolica-dev.github.io/"})
