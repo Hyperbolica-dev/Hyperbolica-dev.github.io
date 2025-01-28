@@ -1,48 +1,697 @@
-<!doctype html><html lang=en dir=ltr><head><meta charset=UTF-8><meta name=viewport content="width=device-width,initial-scale=1"><meta name=description content><meta name=theme-color media="(prefers-color-scheme: light)" content="#ffffff"><meta name=theme-color media="(prefers-color-scheme: dark)" content="#343a40"><meta name=color-scheme content="light dark"><meta property="og:url" content="https://Hyperbolica-dev.github.io/tags/development/"><meta property="og:site_name" content="Hyperbolica"><meta property="og:title" content="Development"><meta property="og:locale" content="en"><meta property="og:type" content="website"><title>Development | Hyperbolica</title>
-<link rel=icon href=/favicon.png><link rel=manifest href=/manifest.json><link rel=canonical href=https://Hyperbolica-dev.github.io/tags/development/><link rel=stylesheet href=/book.min.6c8b9d2a1fc95075ed7da46ca81060b39add8fff6741ac51259f768929281e2c.css integrity="sha256-bIudKh/JUHXtfaRsqBBgs5rdj/9nQaxRJZ92iSkoHiw=" crossorigin=anonymous><script defer src=/fuse.min.js></script><script defer src=/en.search.min.a2e6313bd8e1cd23f15d8410b5879a9b274ba3e0e26e66b8af7d3506e7ce96e1.js integrity="sha256-ouYxO9jhzSPxXYQQtYeamydLo+Dibma4r301BufOluE=" crossorigin=anonymous></script><script defer src=/sw.min.6f6f90fcb8eb1c49ec389838e6b801d0de19430b8e516902f8d75c3c8bd98739.js integrity="sha256-b2+Q/LjrHEnsOJg45rgB0N4ZQwuOUWkC+NdcPIvZhzk=" crossorigin=anonymous></script><link rel=alternate type=application/rss+xml href=https://Hyperbolica-dev.github.io/tags/development/index.xml title=Hyperbolica></head><body dir=ltr><input type=checkbox class="hidden toggle" id=menu-control>
-<input type=checkbox class="hidden toggle" id=toc-control><main class="container flex"><aside class=book-menu><div class=book-menu-content><nav><h2 class=book-brand><a class="flex align-center" href=/><span>Hyperbolica</span></a></h2><div class="book-search hidden"><input type=text id=book-search-input placeholder=Search aria-label=Search maxlength=64 data-hotkeys=s/><div class="book-search-spinner hidden"></div><ul id=book-search-results></ul></div><script>document.querySelector(".book-search").classList.remove("hidden")</script><ul class=book-languages><li><input type=checkbox id=languages class=toggle>
-<label for=languages class="flex justify-between"><a role=button class="flex align-center"><img src=/svg/translate.svg class=book-icon alt=Languages>
-English</a></label><ul><li><a href=/zh/>中文(简体)</a></li><li><a href=/de/>Deutsch</a></li></ul></li></ul><ul><li class=book-section-flat><a href=/docs/example/>Example Site</a><ul><li><a href=/docs/example/table-of-contents/>Table of Contents</a><ul><li><a href=/docs/example/table-of-contents/with-toc/>With ToC</a></li><li><a href=/docs/example/table-of-contents/without-toc/>Without ToC</a></li></ul></li><li><input type=checkbox id=section-1481b790212d774de2ef9230e7cf20a2 class=toggle>
-<label for=section-1481b790212d774de2ef9230e7cf20a2 class="flex justify-between"><a role=button>Collapsed</a></label><ul><li><a href=/docs/example/collapsed/3rd-level/>3rd Level</a><ul><li><a href=/docs/example/collapsed/3rd-level/4th-level/>4th Level</a></li></ul></li></ul></li></ul></li><li class=book-section-flat><span>Shortcodes</span><ul><li><a href=/docs/shortcodes/buttons/>Buttons</a></li><li><a href=/docs/shortcodes/columns/>Columns</a></li><li><a href=/docs/shortcodes/details/>Details</a></li><li><a href=/docs/shortcodes/hints/>Hints</a></li><li><a href=/docs/shortcodes/mermaid/>Mermaid</a></li><li><a href=/docs/shortcodes/tabs/>Tabs</a></li><li><a href=/docs/shortcodes/katex/>KaTeX</a></li></ul></li></ul><ul><li><a href=/posts/>Blog</a></li><li><a href=https://github.com/alex-shpak/hugo-book target=_blank rel=noopener>Github</a></li><li><a href=https://themes.gohugo.io/themes/hugo-book/ target=_blank rel=noopener>Hugo Themes</a></li></ul></nav><script>(function(){var e=document.querySelector("aside .book-menu-content");addEventListener("beforeunload",function(){localStorage.setItem("menu.scrollTop",e.scrollTop)}),e.scrollTop=localStorage.getItem("menu.scrollTop")})()</script></div></aside><div class=book-page><header class=book-header><div class="flex align-center justify-between"><label for=menu-control><img src=/svg/menu.svg class=book-icon alt=Menu></label><h3>Development</h3><label for=toc-control><img src=/svg/toc.svg class=book-icon alt="Table of Contents"></label></div><aside class="hidden clearfix"><nav><ul><li class=book-section-flat><strong>Categories</strong><ul><li class="flex justify-between"><a href=/categories/Development/>Development</a>
-<span>2</span></li><li class="flex justify-between"><a href=/categories/golang/>Golang</a>
-<span>2</span></li></ul></li><li class=book-section-flat><strong>Tags</strong><ul><li class="flex justify-between"><a href=/tags/development/>Development</a>
-<span>2</span></li><li class="flex justify-between"><a href=/tags/go/>Go</a>
-<span>2</span></li><li class="flex justify-between"><a href=/tags/golang/>Golang</a>
-<span>2</span></li><li class="flex justify-between"><a href=/tags/hugo/>Hugo</a>
-<span>1</span></li><li class="flex justify-between"><a href=/tags/templates/>Templates</a>
-<span>1</span></li><li class="flex justify-between"><a href=/tags/themes/>Themes</a>
-<span>1</span></li></ul></li></ul></nav></aside></header><article class="markdown book-post"><h2><a href=/posts/goisforlovers/>(Hu)go Template Primer</a></h2><div class="flex align-center text-small book-post-date"><img src=/svg/calendar.svg class=book-icon alt>
-<span>April 2, 2014</span></div><div class=text-small><a href=/categories/Development/>Development</a>,
-<a href=/categories/golang/>Golang</a></div><div class=text-small><a href=/tags/go/>Go</a>,
-<a href=/tags/golang/>Golang</a>,
-<a href=/tags/templates/>Templates</a>,
-<a href=/tags/themes/>Themes</a>,
-<a href=/tags/development/>Development</a></div><p><p>Hugo uses the excellent
-<a href=https://golang.org/>Go</a>
-<a href=https://golang.org/pkg/html/template/>html/template</a> library for
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head><script src="/Hyperbolica-dev.github.io/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=Hyperbolica-dev.github.io/livereload" data-no-instant defer></script>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="">
+<meta name="theme-color" media="(prefers-color-scheme: light)" content="#ffffff">
+<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#343a40">
+<meta name="color-scheme" content="light dark"><meta property="og:url" content="//localhost:1313/Hyperbolica-dev.github.io/tags/development/">
+  <meta property="og:site_name" content="Hyperbolica">
+  <meta property="og:title" content="Development">
+  <meta property="og:locale" content="en">
+  <meta property="og:type" content="website">
+<title>Development | Hyperbolica</title>
+<link rel="icon" href="/Hyperbolica-dev.github.io/favicon.png" >
+<link rel="manifest" href="/Hyperbolica-dev.github.io/manifest.json">
+<link rel="canonical" href="//localhost:1313/Hyperbolica-dev.github.io/tags/development/">
+<link rel="stylesheet" href="/Hyperbolica-dev.github.io/book.min.6c8b9d2a1fc95075ed7da46ca81060b39add8fff6741ac51259f768929281e2c.css" integrity="sha256-bIudKh/JUHXtfaRsqBBgs5rdj/9nQaxRJZ92iSkoHiw=" crossorigin="anonymous">
+  <script defer src="/Hyperbolica-dev.github.io/fuse.min.js"></script>
+  <script defer src="/Hyperbolica-dev.github.io/en.search.min.1bdd0f9783d39d502159aa87e7b294f0c8ae9bac8e1bf864c777cc883092a46b.js" integrity="sha256-G90Pl4PTnVAhWaqH57KU8Mium6yOG/hkx3fMiDCSpGs=" crossorigin="anonymous"></script>
+
+  <script defer src="/Hyperbolica-dev.github.io/sw.min.8e01d6e2e69d8f4744aa9b7bbb5b38aa6fb08df21e9d10b5a995185aae291db4.js" integrity="sha256-jgHW4uadj0dEqpt7u1s4qm&#43;wjfIenRC1qZUYWq4pHbQ=" crossorigin="anonymous"></script>
+<link rel="alternate" type="application/rss+xml" href="//localhost:1313/Hyperbolica-dev.github.io/tags/development/index.xml" title="Hyperbolica" />
+<!--
+Made with Book Theme
+https://github.com/alex-shpak/hugo-book
+-->
+  
+</head>
+<body dir="ltr">
+  <input type="checkbox" class="hidden toggle" id="menu-control" />
+  <input type="checkbox" class="hidden toggle" id="toc-control" />
+  <main class="container flex">
+    <aside class="book-menu">
+      <div class="book-menu-content">
+        
+  <nav>
+<h2 class="book-brand">
+  <a class="flex align-center" href="/Hyperbolica-dev.github.io/"><span>Hyperbolica</span>
+  </a>
+</h2>
+
+
+<div class="book-search hidden">
+  <input type="text" id="book-search-input" placeholder="Search" aria-label="Search" maxlength="64" data-hotkeys="s/" />
+  <div class="book-search-spinner hidden"></div>
+  <ul id="book-search-results"></ul>
+</div>
+<script>document.querySelector(".book-search").classList.remove("hidden")</script>
+
+
+
+  
+
+
+
+  
+    
+  
+    
+  
+
+
+
+<ul class="book-languages">
+  <li>
+    <input type="checkbox" id="languages" class="toggle" />
+    <label for="languages" class="flex justify-between">
+      <a role="button" class="flex align-center">
+        <img src="/Hyperbolica-dev.github.io/svg/translate.svg" class="book-icon" alt="Languages" />
+        English
+      </a>
+    </label>
+
+    <ul>
+      
+      <li>
+        <a href="/Hyperbolica-dev.github.io/zh/">
+          Chinese
+        </a>
+      </li>
+      
+      <li>
+        <a href="/Hyperbolica-dev.github.io/he/">
+          Hebrew
+        </a>
+      </li>
+      
+    </ul>
+  </li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  <ul>
+    
+      
+        <li class="book-section-flat" >
+          
+  
+  
+
+  
+    <a href="/Hyperbolica-dev.github.io/docs/example/" class="">Example Site</a>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/Hyperbolica-dev.github.io/docs/example/table-of-contents/" class="">Table of Contents</a>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/Hyperbolica-dev.github.io/docs/example/table-of-contents/with-toc/" class="">With ToC</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/Hyperbolica-dev.github.io/docs/example/table-of-contents/without-toc/" class="">Without ToC</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-a8845187745f3310b983f503684ae193" class="toggle"  />
+    <label for="section-a8845187745f3310b983f503684ae193" class="flex justify-between">
+      <a role="button" class="">Collapsed</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/Hyperbolica-dev.github.io/docs/example/collapsed/3rd-level/" class="">3rd Level</a>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/Hyperbolica-dev.github.io/docs/example/collapsed/3rd-level/4th-level/" class="">4th Level</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li class="book-section-flat" >
+          
+  
+  
+
+  
+    <span>Shortcodes</span>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/Hyperbolica-dev.github.io/docs/shortcodes/buttons/" class="">Buttons</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/Hyperbolica-dev.github.io/docs/shortcodes/columns/" class="">Columns</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/Hyperbolica-dev.github.io/docs/shortcodes/details/" class="">Details</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/Hyperbolica-dev.github.io/docs/shortcodes/hints/" class="">Hints</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/Hyperbolica-dev.github.io/docs/shortcodes/mermaid/" class="">Mermaid</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/Hyperbolica-dev.github.io/docs/shortcodes/tabs/" class="">Tabs</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/Hyperbolica-dev.github.io/docs/shortcodes/katex/" class="">KaTeX</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+  </ul>
+
+
+
+
+
+
+
+
+
+
+  
+<ul>
+  
+  <li>
+    <a href="/Hyperbolica-dev.github.io/posts/"  >
+        Blog
+      </a>
+  </li>
+  
+  <li>
+    <a href="https://github.com/alex-shpak/hugo-book"  target="_blank" rel="noopener">
+        Github
+      </a>
+  </li>
+  
+  <li>
+    <a href="https://themes.gohugo.io/themes/hugo-book/"  target="_blank" rel="noopener">
+        Hugo Themes
+      </a>
+  </li>
+  
+</ul>
+
+
+
+
+
+
+</nav>
+
+
+
+
+  <script>(function(){var e=document.querySelector("aside .book-menu-content");addEventListener("beforeunload",function(){localStorage.setItem("menu.scrollTop",e.scrollTop)}),e.scrollTop=localStorage.getItem("menu.scrollTop")})()</script>
+
+
+ 
+      </div>
+    </aside>
+
+    <div class="book-page">
+      <header class="book-header">
+        
+  <div class="flex align-center justify-between">
+  <label for="menu-control">
+    <img src="/Hyperbolica-dev.github.io/svg/menu.svg" class="book-icon" alt="Menu" />
+  </label>
+
+  <h3>Development</h3>
+
+  <label for="toc-control">
+    
+    <img src="/Hyperbolica-dev.github.io/svg/toc.svg" class="book-icon" alt="Table of Contents" />
+    
+  </label>
+</div>
+
+
+  
+  <aside class="hidden clearfix">
+    
+  <nav>
+  <ul>
+  
+    
+    <li class="book-section-flat">
+      <strong>Categories</strong>
+      <ul>
+      
+        <li class="flex justify-between">
+          <a href="/Hyperbolica-dev.github.io/categories/Development/">Development</a>
+          <span>2</span>
+        </li>
+      
+        <li class="flex justify-between">
+          <a href="/Hyperbolica-dev.github.io/categories/golang/">Golang</a>
+          <span>2</span>
+        </li>
+      
+      </ul>
+    </li>
+    
+  
+    
+    <li class="book-section-flat">
+      <strong>Tags</strong>
+      <ul>
+      
+        <li class="flex justify-between">
+          <a href="/Hyperbolica-dev.github.io/tags/development/">Development</a>
+          <span>2</span>
+        </li>
+      
+        <li class="flex justify-between">
+          <a href="/Hyperbolica-dev.github.io/tags/go/">Go</a>
+          <span>2</span>
+        </li>
+      
+        <li class="flex justify-between">
+          <a href="/Hyperbolica-dev.github.io/tags/golang/">Golang</a>
+          <span>2</span>
+        </li>
+      
+        <li class="flex justify-between">
+          <a href="/Hyperbolica-dev.github.io/tags/hugo/">Hugo</a>
+          <span>1</span>
+        </li>
+      
+        <li class="flex justify-between">
+          <a href="/Hyperbolica-dev.github.io/tags/templates/">Templates</a>
+          <span>1</span>
+        </li>
+      
+        <li class="flex justify-between">
+          <a href="/Hyperbolica-dev.github.io/tags/themes/">Themes</a>
+          <span>1</span>
+        </li>
+      
+      </ul>
+    </li>
+    
+  
+  </ul>
+</nav>
+
+
+  </aside>
+  
+ 
+      </header>
+
+      
+      
+  
+  <article class="markdown book-post">
+    <h2>
+      <a href="/Hyperbolica-dev.github.io/posts/goisforlovers/">(Hu)go Template Primer</a>
+    </h2>
+    
+  <div class="flex align-center text-small book-post-date">
+    <img src="/Hyperbolica-dev.github.io/svg/calendar.svg" class="book-icon " alt="" />
+    <span>April 2, 2014</span>
+  </div>
+
+
+
+  
+  <div class="text-small">
+    
+      <a href="/Hyperbolica-dev.github.io/categories/Development/">Development</a>, 
+      <a href="/Hyperbolica-dev.github.io/categories/golang/">Golang</a>
+  </div>
+  
+
+  
+  <div class="text-small">
+    
+      <a href="/Hyperbolica-dev.github.io/tags/go/">Go</a>, 
+      <a href="/Hyperbolica-dev.github.io/tags/golang/">Golang</a>, 
+      <a href="/Hyperbolica-dev.github.io/tags/templates/">Templates</a>, 
+      <a href="/Hyperbolica-dev.github.io/tags/themes/">Themes</a>, 
+      <a href="/Hyperbolica-dev.github.io/tags/development/">Development</a>
+  </div>
+  
+
+
+    <p><p>Hugo uses the excellent 
+  <a href="https://golang.org/">Go</a> 
+  <a href="https://golang.org/pkg/html/template/">html/template</a> library for
 its template engine. It is an extremely lightweight engine that provides a very
 small amount of logic. In our experience that it is just the right amount of
 logic to be able to create a good static website. If you have used other
 template systems from different languages or frameworks you will find a lot of
-similarities in Go templates.</p><p>This document is a brief primer on using Go templates. The
-<a href=https://golang.org/pkg/html/template/>Go docs</a>
-provide more details.</p><a href=/posts/goisforlovers/>...</a></p></article><article class="markdown book-post"><h2><a href=/posts/hugoisforlovers/>Getting Started with Hugo</a></h2><div class="flex align-center text-small book-post-date"><img src=/svg/calendar.svg class=book-icon alt>
-<span>April 2, 2014</span></div><div class=text-small><a href=/categories/Development/>Development</a>,
-<a href=/categories/golang/>Golang</a></div><div class=text-small><a href=/tags/go/>Go</a>,
-<a href=/tags/golang/>Golang</a>,
-<a href=/tags/hugo/>Hugo</a>,
-<a href=/tags/development/>Development</a></div><p><h2 id=step-1-install-hugo>Step 1. Install Hugo
-<a class=anchor href=#step-1-install-hugo>#</a></h2><p>Go to
-<a href=https://github.com/spf13/hugo/releases>Hugo releases</a> and download the
-appropriate version for your OS and architecture.</p><p>Save it somewhere specific as we will be using it in the next step.</p><p>More complete instructions are available at
-<a href=https://gohugo.io/getting-started/installing/>Install Hugo</a></p><h2 id=step-2-build-the-docs>Step 2. Build the Docs
-<a class=anchor href=#step-2-build-the-docs>#</a></h2><p>Hugo has its own example site which happens to also be the documentation site
-you are reading right now.</p><p>Follow the following steps:</p><a href=/posts/hugoisforlovers/>...</a></p></article><footer class=book-footer><div class="flex flex-wrap justify-between"></div><script>(function(){function e(e){const t=window.getSelection(),n=document.createRange();n.selectNodeContents(e),t.removeAllRanges(),t.addRange(n)}document.querySelectorAll("pre code").forEach(t=>{t.addEventListener("click",function(){if(window.getSelection().toString())return;e(t.parentElement),navigator.clipboard&&navigator.clipboard.writeText(t.parentElement.textContent)})})})()</script></footer><label for=menu-control class="hidden book-menu-overlay"></label></div><aside class=book-toc><div class=book-toc-content><nav><ul><li class=book-section-flat><strong>Categories</strong><ul><li class="flex justify-between"><a href=/categories/Development/>Development</a>
-<span>2</span></li><li class="flex justify-between"><a href=/categories/golang/>Golang</a>
-<span>2</span></li></ul></li><li class=book-section-flat><strong>Tags</strong><ul><li class="flex justify-between"><a href=/tags/development/>Development</a>
-<span>2</span></li><li class="flex justify-between"><a href=/tags/go/>Go</a>
-<span>2</span></li><li class="flex justify-between"><a href=/tags/golang/>Golang</a>
-<span>2</span></li><li class="flex justify-between"><a href=/tags/hugo/>Hugo</a>
-<span>1</span></li><li class="flex justify-between"><a href=/tags/templates/>Templates</a>
-<span>1</span></li><li class="flex justify-between"><a href=/tags/themes/>Themes</a>
-<span>1</span></li></ul></li></ul></nav></div></aside></main></body></html>
+similarities in Go templates.</p>
+<p>This document is a brief primer on using Go templates. The 
+  <a href="https://golang.org/pkg/html/template/">Go docs</a>
+provide more details.</p>
+        <a href="/Hyperbolica-dev.github.io/posts/goisforlovers/">...</a>
+      
+    </p>
+  </article>
+  
+  <article class="markdown book-post">
+    <h2>
+      <a href="/Hyperbolica-dev.github.io/posts/hugoisforlovers/">Getting Started with Hugo</a>
+    </h2>
+    
+  <div class="flex align-center text-small book-post-date">
+    <img src="/Hyperbolica-dev.github.io/svg/calendar.svg" class="book-icon " alt="" />
+    <span>April 2, 2014</span>
+  </div>
+
+
+
+  
+  <div class="text-small">
+    
+      <a href="/Hyperbolica-dev.github.io/categories/Development/">Development</a>, 
+      <a href="/Hyperbolica-dev.github.io/categories/golang/">Golang</a>
+  </div>
+  
+
+  
+  <div class="text-small">
+    
+      <a href="/Hyperbolica-dev.github.io/tags/go/">Go</a>, 
+      <a href="/Hyperbolica-dev.github.io/tags/golang/">Golang</a>, 
+      <a href="/Hyperbolica-dev.github.io/tags/hugo/">Hugo</a>, 
+      <a href="/Hyperbolica-dev.github.io/tags/development/">Development</a>
+  </div>
+  
+
+
+    <p><h2 id="step-1-install-hugo">
+  Step 1. Install Hugo
+  <a class="anchor" href="#step-1-install-hugo">#</a>
+</h2>
+<p>Go to 
+  <a href="https://github.com/spf13/hugo/releases">Hugo releases</a> and download the
+appropriate version for your OS and architecture.</p>
+<p>Save it somewhere specific as we will be using it in the next step.</p>
+<p>More complete instructions are available at 
+  <a href="https://gohugo.io/getting-started/installing/">Install Hugo</a></p>
+<h2 id="step-2-build-the-docs">
+  Step 2. Build the Docs
+  <a class="anchor" href="#step-2-build-the-docs">#</a>
+</h2>
+<p>Hugo has its own example site which happens to also be the documentation site
+you are reading right now.</p>
+<p>Follow the following steps:</p>
+        <a href="/Hyperbolica-dev.github.io/posts/hugoisforlovers/">...</a>
+      
+    </p>
+  </article>
+  
+
+  
+ 
+      
+
+      <footer class="book-footer">
+        
+  <div class="flex flex-wrap justify-between">
+
+
+
+
+
+</div>
+
+
+
+  <script>(function(){function e(e){const t=window.getSelection(),n=document.createRange();n.selectNodeContents(e),t.removeAllRanges(),t.addRange(n)}document.querySelectorAll("pre code").forEach(t=>{t.addEventListener("click",function(){if(window.getSelection().toString())return;e(t.parentElement),navigator.clipboard&&navigator.clipboard.writeText(t.parentElement.textContent)})})})()</script>
+
+
+ 
+        
+      </footer>
+
+      
+  
+ 
+
+      <label for="menu-control" class="hidden book-menu-overlay"></label>
+    </div>
+
+    
+    <aside class="book-toc">
+      <div class="book-toc-content">
+        
+  <nav>
+  <ul>
+  
+    
+    <li class="book-section-flat">
+      <strong>Categories</strong>
+      <ul>
+      
+        <li class="flex justify-between">
+          <a href="/Hyperbolica-dev.github.io/categories/Development/">Development</a>
+          <span>2</span>
+        </li>
+      
+        <li class="flex justify-between">
+          <a href="/Hyperbolica-dev.github.io/categories/golang/">Golang</a>
+          <span>2</span>
+        </li>
+      
+      </ul>
+    </li>
+    
+  
+    
+    <li class="book-section-flat">
+      <strong>Tags</strong>
+      <ul>
+      
+        <li class="flex justify-between">
+          <a href="/Hyperbolica-dev.github.io/tags/development/">Development</a>
+          <span>2</span>
+        </li>
+      
+        <li class="flex justify-between">
+          <a href="/Hyperbolica-dev.github.io/tags/go/">Go</a>
+          <span>2</span>
+        </li>
+      
+        <li class="flex justify-between">
+          <a href="/Hyperbolica-dev.github.io/tags/golang/">Golang</a>
+          <span>2</span>
+        </li>
+      
+        <li class="flex justify-between">
+          <a href="/Hyperbolica-dev.github.io/tags/hugo/">Hugo</a>
+          <span>1</span>
+        </li>
+      
+        <li class="flex justify-between">
+          <a href="/Hyperbolica-dev.github.io/tags/templates/">Templates</a>
+          <span>1</span>
+        </li>
+      
+        <li class="flex justify-between">
+          <a href="/Hyperbolica-dev.github.io/tags/themes/">Themes</a>
+          <span>1</span>
+        </li>
+      
+      </ul>
+    </li>
+    
+  
+  </ul>
+</nav>
+
+ 
+      </div>
+    </aside>
+    
+  </main>
+
+  
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
