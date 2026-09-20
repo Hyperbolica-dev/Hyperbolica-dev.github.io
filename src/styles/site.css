@@ -1,0 +1,31 @@
+@import 'katex/dist/katex.min.css';
+
+/* Site-level tokens. Keep these hooks stable for later UI work. */
+:root {
+	/* Starlight reads this variable for the desktop navigation column. */
+	--blog-sidebar-width: 19rem;
+	--sl-sidebar-width: var(--blog-sidebar-width);
+
+	/* Initial accent palette; future theme-color controls should update these tokens. */
+	--sl-color-accent-low: hsl(198, 54%, 20%);
+	--sl-color-accent: hsl(198, 100%, 48%);
+	--sl-color-accent-high: hsl(198, 100%, 82%);
+}
+
+:root[data-theme='light'] {
+	--sl-color-accent-low: hsl(198, 70%, 92%);
+	--sl-color-accent: hsl(198, 80%, 34%);
+	--sl-color-accent-high: hsl(198, 80%, 22%);
+}
+
+/* Keep the content column comfortable for long-form reading. */
+.sl-markdown-content {
+	max-width: 48rem;
+}
+
+/* Mobile keeps Starlight's one-column layout and avoids inherited desktop widths. */
+@media (max-width: 49.99rem) {
+	:root {
+		--blog-sidebar-width: 100%;
+	}
+}
