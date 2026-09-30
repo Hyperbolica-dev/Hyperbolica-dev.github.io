@@ -1,0 +1,54 @@
+<nav class="blog-sidebar-rail" aria-label="Quick navigation">
+	<a href="/" aria-label="Home" title="Home">⌂</a>
+	<a href="/cognition/" aria-label="Cognition" title="Cognition">◌</a>
+	<a href="/systems/" aria-label="Systems" title="Systems">▥</a>
+	<a href="/science/" aria-label="Science" title="Science">✦</a>
+	<a href="/frontier/" aria-label="Frontier" title="Frontier">◇</a>
+	<a href="/tags/" aria-label="All articles" title="All articles">#</a>
+	<a href="/about/" aria-label="About" title="About">●</a>
+</nav>
+
+<style>
+	.blog-sidebar-rail {
+		display: none;
+		flex-direction: column;
+		align-items: center;
+		gap: 0.35rem;
+		width: 100%;
+	}
+
+	.blog-sidebar-rail a {
+		display: grid;
+		place-items: center;
+		width: 2.25rem;
+		height: 2.25rem;
+		border-radius: 0.45rem;
+		color: var(--sl-color-gray-2);
+		font-size: 1.1rem;
+		line-height: 1;
+		text-decoration: none;
+	}
+
+	.blog-sidebar-rail a:hover,
+	.blog-sidebar-rail a:focus-visible {
+		background: var(--sl-color-gray-6);
+		color: var(--sl-color-text-accent);
+	}
+
+	.blog-sidebar-rail a:focus-visible {
+		outline: 2px solid var(--sl-color-accent);
+		outline-offset: 2px;
+	}
+
+	@media (min-width: 50rem) {
+		:global(html[data-blog-sidebar-collapsed]) .blog-sidebar-rail {
+			display: flex;
+		}
+	}
+
+	@media (max-width: 49.99rem) {
+		.blog-sidebar-rail {
+			display: none;
+		}
+	}
+</style>

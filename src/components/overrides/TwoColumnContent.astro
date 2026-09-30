@@ -1,5 +1,8 @@
 ---
+import HomeSidebar from '../HomeSidebar.astro';
+
 const { toc } = Astro.locals.starlightRoute;
+const isHome = Astro.locals.starlightRoute.entry?.id === 'index';
 ---
 
 <div class="lg:sl-flex blog-two-column-content">
@@ -25,6 +28,7 @@ const { toc } = Astro.locals.starlightRoute;
 				></div>
 				<div class="right-sidebar">
 					<slot name="right-sidebar" />
+					{isHome && <HomeSidebar />}
 				</div>
 			</aside>
 		)

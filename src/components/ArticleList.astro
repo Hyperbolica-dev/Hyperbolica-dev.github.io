@@ -3,6 +3,7 @@ import {
 	getArticlesByCategory,
 	getArticlesByTag,
 	getPublicArticles,
+	getArticleReadingTime,
 	type BlogArticle,
 	type BlogCategory,
 } from '../lib/content';
@@ -32,6 +33,10 @@ if (tag) {
 }
 
 const visibleArticles = typeof limit === 'number' ? articles.slice(0, Math.max(0, limit)) : articles;
+const dateFormatter = new Intl.DateTimeFormat('en', {
+	dateStyle: 'medium',
+	timeZone: 'UTC',
+});
 ---
 
 {
@@ -39,15 +44,27 @@ const visibleArticles = typeof limit === 'number' ? articles.slice(0, Math.max(0
 		<ul class="article-list">
 			{visibleArticles.map((article) => (
 				<li class="article-card">
-					<h3><a href={`/${article.id}/`}>{article.data.title}</a></h3>
-					<p>{article.data.description}</p>
-					{article.data.tags.length > 0 && (
-						<ul class="article-tags" aria-label={`Tags for ${article.data.title}`}>
-							{article.data.tags.map((articleTag) => (
-								<li><a href={`/tags/${encodeURIComponent(articleTag)}/`}>{articleTag}</a></li>
-							))}
-						</ul>
-					)}
+					<article class="article-card-body">
+						<div>
+							<h3><a href={`/${article.id}/`}>{article.data.title}</a></h3>
+							<div class="article-card-meta">
+								<time datetime={article.data.publishedAt.toISOString()}>
+									{dateFormatter.format(article.data.publishedAt)}
+								</time>
+								<span>{article.data.category}</span>
+								<span>{getArticleReadingTime(article).minutes} min read</span>
+							</div>
+							<p>{article.data.description}</p>
+							{article.data.tags.length > 0 && (
+								<ul class="article-tags" aria-label={`Tags for ${article.data.title}`}>
+									{article.data.tags.map((articleTag) => (
+										<li><a href={`/tags/${encodeURIComponent(articleTag)}/`}>{articleTag}</a></li>
+									))}
+								</ul>
+							)}
+						</div>
+						<div class="article-card-art" aria-hidden="true"></div>
+					</article>
 				</li>
 			))}
 		</ul>
@@ -72,8 +89,15 @@ const visibleArticles = typeof limit === 'number' ? articles.slice(0, Math.max(0
 	.article-card {
 		border: 1px solid var(--sl-color-gray-5);
 		border-radius: 0.5rem;
-		padding: 1rem;
+		padding: 0.85rem;
 		min-width: 0;
+	}
+
+	.article-card-body {
+		display: grid;
+		grid-template-columns: minmax(0, 1fr) 7rem;
+		gap: 1rem;
+		align-items: stretch;
 	}
 
 	.article-card h3,
@@ -81,9 +105,29 @@ const visibleArticles = typeof limit === 'number' ? articles.slice(0, Math.max(0
 		margin-block: 0;
 	}
 
+	.article-card-meta {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.35rem 0.75rem;
+		margin-top: 0.35rem;
+		color: var(--sl-color-gray-3);
+		font-size: var(--sl-text-xs);
+	}
+
 	.article-card p {
 		margin-top: 0.5rem;
 		color: var(--sl-color-gray-2);
+	}
+
+	.article-card-art {
+		min-height: 6rem;
+		border: 1px solid var(--sl-color-gray-5);
+		border-radius: 0.75rem;
+		background:
+			radial-gradient(circle at 35% 35%, var(--sl-color-accent) 0 1px, transparent 1.5px),
+			linear-gradient(135deg, transparent 45%, var(--sl-color-gray-5) 46% 47%, transparent 48%),
+			var(--sl-color-bg-nav);
+		opacity: 0.8;
 	}
 
 	.article-card a,
@@ -111,5 +155,15 @@ const visibleArticles = typeof limit === 'number' ? articles.slice(0, Math.max(0
 		border-inline-start: 0.2rem solid var(--sl-color-gray-5);
 		color: var(--sl-color-gray-2);
 		padding-inline-start: 0.9rem;
+	}
+
+	@media (max-width: 39rem) {
+		.article-card-body {
+			grid-template-columns: minmax(0, 1fr);
+		}
+
+		.article-card-art {
+			min-height: 3rem;
+		}
 	}
 </style>
