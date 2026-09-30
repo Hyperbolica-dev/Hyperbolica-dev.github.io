@@ -3,37 +3,42 @@ import avatar from '../assets/tanh_avatar.png';
 import darkAvatar from '../assets/tanh_avatar-dark.png';
 ---
 
-<a class="blog-profile-link" href="/about/" aria-label="About Hyperbolica-dev — GitHub profile">
-	<img
-		class="blog-profile-avatar blog-profile-avatar-light"
-		src={avatar.src}
-		alt=""
-		width="48"
-		height="48"
-		loading="lazy"
-	/>
-	<img
-		class="blog-profile-avatar blog-profile-avatar-dark"
-		src={darkAvatar.src}
-		alt=""
-		width="48"
-		height="48"
-		loading="lazy"
-	/>
-	<span class="blog-profile-copy">
+<div class="blog-profile-block">
+	<a class="blog-profile-link" href="/about/" aria-label="About Hyperbolica-dev">
+		<img
+			class="blog-profile-avatar blog-profile-avatar-light"
+			src={avatar.src}
+			alt=""
+			width="48"
+			height="48"
+			loading="lazy"
+		/>
+		<img
+			class="blog-profile-avatar blog-profile-avatar-dark"
+			src={darkAvatar.src}
+			alt=""
+			width="48"
+			height="48"
+			loading="lazy"
+		/>
 		<strong>Hyperbolica-dev</strong>
-		<span>GitHub profile</span>
-	</span>
-</a>
+	</a>
+	<a class="blog-github-profile" href="https://github.com/Hyperbolica-dev" rel="me">GitHub profile</a>
+</div>
 
 <style>
+	.blog-profile-block {
+		display: grid;
+		gap: 0.15rem;
+		margin-top: auto;
+		border-top: 1px solid var(--sl-color-hairline-shade);
+		padding: 0.9rem 0.5rem 0.25rem;
+	}
+
 	.blog-profile-link {
 		display: flex;
 		align-items: center;
 		gap: 0.7rem;
-		margin-top: auto;
-		border-top: 1px solid var(--sl-color-hairline-shade);
-		padding: 0.9rem 0.5rem 0.25rem;
 		color: var(--sl-color-text);
 		text-decoration: none;
 	}
@@ -79,28 +84,26 @@ import darkAvatar from '../assets/tanh_avatar-dark.png';
 		}
 	}
 
-	.blog-profile-copy {
-		display: grid;
+	.blog-profile-link strong {
 		min-width: 0;
-		gap: 0.1rem;
-	}
-
-	.blog-profile-copy strong,
-	.blog-profile-copy span {
 		overflow-wrap: anywhere;
-	}
-
-	.blog-profile-copy strong {
 		font-size: var(--sl-text-sm);
 	}
 
-	.blog-profile-copy span {
-		color: var(--sl-color-gray-2);
+	.blog-github-profile {
+		padding-inline-start: 3rem;
+		color: var(--sl-color-text-accent);
 		font-size: var(--sl-text-xs);
+		text-decoration: none;
+	}
+
+	.blog-github-profile:hover,
+	.blog-github-profile:focus-visible {
+		text-decoration: underline;
 	}
 
 	@media (max-width: 49.99rem) {
-		.blog-profile-link {
+		.blog-profile-block {
 			display: none;
 		}
 	}
