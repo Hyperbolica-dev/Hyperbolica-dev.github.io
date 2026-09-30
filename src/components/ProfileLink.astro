@@ -1,0 +1,68 @@
+---
+import avatar from '../assets/houston.webp';
+---
+
+<a class="blog-profile-link" href="/about/" aria-label="About Hyperbolica-dev — GitHub profile">
+	<img src={avatar.src} alt="" width="48" height="48" loading="lazy" />
+	<span class="blog-profile-copy">
+		<strong>Hyperbolica-dev</strong>
+		<span>GitHub profile</span>
+	</span>
+</a>
+
+<style>
+	.blog-profile-link {
+		display: flex;
+		align-items: center;
+		gap: 0.7rem;
+		margin-top: auto;
+		border-top: 1px solid var(--sl-color-hairline-shade);
+		padding: 0.9rem 0.5rem 0.25rem;
+		color: var(--sl-color-text);
+		text-decoration: none;
+	}
+
+	.blog-profile-link:hover,
+	.blog-profile-link:focus-visible {
+		color: var(--sl-color-white);
+	}
+
+	.blog-profile-link:focus-visible {
+		outline: 2px solid var(--sl-color-accent);
+		outline-offset: 2px;
+	}
+
+	.blog-profile-link img {
+		width: 2.25rem;
+		height: 2.25rem;
+		flex: 0 0 2.25rem;
+		border-radius: 50%;
+		object-fit: cover;
+	}
+
+	.blog-profile-copy {
+		display: grid;
+		min-width: 0;
+		gap: 0.1rem;
+	}
+
+	.blog-profile-copy strong,
+	.blog-profile-copy span {
+		overflow-wrap: anywhere;
+	}
+
+	.blog-profile-copy strong {
+		font-size: var(--sl-text-sm);
+	}
+
+	.blog-profile-copy span {
+		color: var(--sl-color-gray-2);
+		font-size: var(--sl-text-xs);
+	}
+
+	@media (max-width: 49.99rem) {
+		.blog-profile-link {
+			display: none;
+		}
+	}
+</style>

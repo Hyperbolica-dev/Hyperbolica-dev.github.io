@@ -1,0 +1,107 @@
+---
+import { getArticlePageContext } from '../lib/content';
+
+const currentId = Astro.locals.starlightRoute.entry.id;
+const context = await getArticlePageContext(currentId);
+const dateFormatter = new Intl.DateTimeFormat('en', {
+	dateStyle: 'long',
+	timeZone: 'UTC',
+});
+---
+
+{
+	context && (
+		<dl class="article-metadata" data-article-ui="metadata">
+			<div>
+				<dt>Published</dt>
+				<dd>
+					<time datetime={context.article.data.publishedAt.toISOString()}>
+						{dateFormatter.format(context.article.data.publishedAt)}
+					</time>
+				</dd>
+			</div>
+			{context.article.data.updatedAt && (
+				<div>
+					<dt>Updated</dt>
+					<dd>
+						<time datetime={context.article.data.updatedAt.toISOString()}>
+							{dateFormatter.format(context.article.data.updatedAt)}
+						</time>
+					</dd>
+				</div>
+			)}
+			<div>
+				<dt>Category</dt>
+				<dd><a href={`/${context.article.data.category}/`}>{context.article.data.category}</a></dd>
+			</div>
+			<div>
+				<dt>Reading time</dt>
+				<dd>{context.readingTime.minutes} min read</dd>
+			</div>
+			{context.article.data.tags.length > 0 && (
+				<div class="tag-metadata">
+					<dt>Tags</dt>
+					<dd>
+						<ul>
+							{context.article.data.tags.map((tag) => (
+								<li><a href={`/tags/${encodeURIComponent(tag)}/`}>{tag}</a></li>
+							))}
+						</ul>
+					</dd>
+				</div>
+			)}
+		</dl>
+	)
+}
+
+<style>
+	.article-metadata {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.75rem 1.5rem;
+		margin-block: 1rem 0;
+		color: var(--sl-color-gray-2);
+		font-size: var(--sl-text-sm);
+	}
+
+	.article-metadata > div {
+		min-width: 0;
+	}
+
+	dt {
+		color: var(--sl-color-gray-3);
+		font-size: var(--sl-text-xs);
+		font-weight: 600;
+		letter-spacing: 0.04em;
+		text-transform: uppercase;
+	}
+
+	dd {
+		margin: 0.15rem 0 0;
+	}
+
+	a {
+		overflow-wrap: anywhere;
+	}
+
+	.tag-metadata {
+		flex-basis: 100%;
+	}
+
+	ul {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.4rem;
+		list-style: none;
+		margin: 0;
+		padding: 0;
+	}
+
+	li a {
+		display: inline-flex;
+		border-radius: 999px;
+		background: var(--sl-color-gray-6);
+		padding: 0.15rem 0.55rem;
+		text-decoration: none;
+	}
+</style>

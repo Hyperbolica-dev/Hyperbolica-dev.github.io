@@ -10,7 +10,8 @@
 
 ## Content rules
 
-- Phase 0 contains structure and placeholders only. Do not add real blog content until the next phase.
+- Phase 1 may extend the public content model and add manually approved public articles.
+- Never scan, mirror, or automatically import a private notes repository. Only Markdown or MDX that has been deliberately selected, reviewed for privacy, and approved for publication may enter this repository.
 - Keep category entry pages and article slugs stable once published.
 - Use frontmatter for page titles and descriptions; keep prose concise and accessible.
 - Math is authored with LaTeX in Markdown/MDX and rendered with KaTeX.

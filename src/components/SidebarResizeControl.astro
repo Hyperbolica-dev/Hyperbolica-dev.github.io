@@ -1,0 +1,133 @@
+<div
+	class="blog-sidebar-resizer"
+	role="separator"
+	aria-label="Resize navigation sidebar"
+	aria-orientation="vertical"
+	aria-valuemin="14"
+	aria-valuemax="28"
+	aria-valuenow="19"
+	aria-valuetext="19rem"
+	tabindex="0"
+	data-blog-sidebar-resizer
+	data-min-width-rem="14"
+	data-max-width-rem="28"
+	data-default-width-rem="19"
+	hidden
+></div>
+
+<script is:inline>
+	(() => {
+		const resizer = document.querySelector('[data-blog-sidebar-resizer]');
+		if (!(resizer instanceof HTMLElement)) return;
+
+		const root = document.documentElement;
+		const storageKey = 'hyperbolica-sidebar-width';
+		const desktopQuery = window.matchMedia('(min-width: 50rem)');
+		const minWidthRem = Number(resizer.dataset.minWidthRem);
+		const maxWidthRem = Number(resizer.dataset.maxWidthRem);
+		const defaultWidthRem = Number(resizer.dataset.defaultWidthRem);
+
+		const roundWidth = (widthRem) => Math.round(widthRem * 10) / 10;
+		const clampWidth = (widthRem) =>
+			Math.min(maxWidthRem, Math.max(minWidthRem, roundWidth(widthRem)));
+
+		const readWidth = () => {
+			try {
+				const stored = Number(window.localStorage.getItem(storageKey));
+				return Number.isFinite(stored) ? clampWidth(stored) : defaultWidthRem;
+			} catch {
+				return defaultWidthRem;
+			}
+		};
+
+		const persistWidth = (widthRem) => {
+			try {
+				window.localStorage.setItem(storageKey, String(widthRem));
+			} catch {
+				// Private browsing and blocked storage should not disable resizing.
+			}
+		};
+
+		const setValueAttributes = (widthRem) => {
+			resizer.setAttribute('aria-valuenow', String(widthRem));
+			resizer.setAttribute('aria-valuetext', `${widthRem}rem`);
+		};
+
+		const applyWidth = (widthRem, persist = false) => {
+			const nextWidth = clampWidth(widthRem);
+			root.style.setProperty('--blog-sidebar-width', `${nextWidth}rem`);
+			setValueAttributes(nextWidth);
+			if (persist) persistWidth(nextWidth);
+			return nextWidth;
+		};
+
+		const isAvailable = () =>
+			desktopQuery.matches && !root.hasAttribute('data-blog-sidebar-collapsed');
+
+		const syncAvailability = () => {
+			const available = isAvailable();
+			resizer.hidden = !available;
+			resizer.tabIndex = available ? 0 : -1;
+			resizer.setAttribute('aria-disabled', String(!available));
+		};
+
+		let widthRem = defaultWidthRem;
+		let dragStartX = 0;
+		let dragStartWidthRem = widthRem;
+
+		const finishDrag = (event) => {
+			if (!resizer.hasPointerCapture(event.pointerId)) return;
+			resizer.releasePointerCapture(event.pointerId);
+			resizer.classList.remove('is-dragging');
+			if (desktopQuery.matches) persistWidth(widthRem);
+		};
+
+		const syncViewport = () => {
+			if (desktopQuery.matches) {
+				widthRem = applyWidth(readWidth(), true);
+			} else {
+				root.style.removeProperty('--blog-sidebar-width');
+			}
+			syncAvailability();
+		};
+
+		resizer.addEventListener('pointerdown', (event) => {
+			if (!isAvailable() || event.button !== 0) return;
+			event.preventDefault();
+			dragStartX = event.clientX;
+			dragStartWidthRem = widthRem;
+			resizer.setPointerCapture(event.pointerId);
+			resizer.classList.add('is-dragging');
+		});
+
+		resizer.addEventListener('pointermove', (event) => {
+			if (!desktopQuery.matches || !resizer.hasPointerCapture(event.pointerId)) return;
+			const rootFontSize = Number.parseFloat(getComputedStyle(root).fontSize) || 16;
+			widthRem = applyWidth(dragStartWidthRem + (event.clientX - dragStartX) / rootFontSize);
+		});
+
+		resizer.addEventListener('pointerup', finishDrag);
+		resizer.addEventListener('pointercancel', finishDrag);
+
+		resizer.addEventListener('keydown', (event) => {
+			if (!isAvailable()) return;
+
+			let nextWidth;
+			if (event.key === 'ArrowLeft') nextWidth = widthRem - 1;
+			if (event.key === 'ArrowRight') nextWidth = widthRem + 1;
+			if (event.key === 'Home') nextWidth = minWidthRem;
+			if (event.key === 'End') nextWidth = maxWidthRem;
+			if (nextWidth === undefined) return;
+
+			event.preventDefault();
+			widthRem = applyWidth(nextWidth, true);
+		});
+
+		new MutationObserver(syncAvailability).observe(root, {
+			attributes: true,
+			attributeFilter: ['data-blog-sidebar-collapsed'],
+		});
+		desktopQuery.addEventListener('change', syncViewport);
+		syncViewport();
+	})();
+</script>

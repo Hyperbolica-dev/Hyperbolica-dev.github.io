@@ -1,0 +1,13 @@
+---
+import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
+import TagList from '../../components/TagList.astro';
+---
+
+<StarlightPage
+	frontmatter={{
+		title: 'Tags',
+		description: 'Browse public articles by topic.',
+	}}
+>
+	<TagList />
+</StarlightPage>

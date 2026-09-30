@@ -1,0 +1,28 @@
+---
+import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
+import ArticleList from '../../components/ArticleList.astro';
+import { getTagCollection } from '../../lib/content';
+
+export async function getStaticPaths() {
+	return (await getTagCollection()).map(({ tag, count }) => ({
+		params: { tag },
+		props: { tag, count },
+	}));
+}
+
+interface Props {
+	tag: string;
+	count: number;
+}
+
+const { tag, count } = Astro.props;
+---
+
+<StarlightPage
+	frontmatter={{
+		title: `Tag: ${tag}`,
+		description: `${count} public ${count === 1 ? 'article' : 'articles'} tagged “${tag}”.`,
+	}}
+>
+	<ArticleList tag={tag} emptyMessage={`No public articles use the “${tag}” tag.`} />
+</StarlightPage>
