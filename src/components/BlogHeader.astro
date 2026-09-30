@@ -1,0 +1,147 @@
+---
+import { Icon } from '@astrojs/starlight/components';
+import InlineSearch from './InlineSearch.astro';
+import { localeFromPath, ui } from '../lib/locale';
+import { site } from '../lib/site';
+import SidebarCollapseControl from './SidebarCollapseControl.astro';
+import ThemeSettings from './ThemeSettings.astro';
+const locale = localeFromPath(Astro.url.pathname);
+---
+
+<header class="blog-header">
+	<div class="blog-header-start">
+		<SidebarCollapseControl />
+		<button
+			type="button"
+			class="blog-mobile-menu-toggle"
+			popovertarget="starlight__sidebar"
+			aria-controls="starlight__sidebar"
+			aria-label={ui[locale].openNavigation}
+			title={ui[locale].openNavigation}
+		>
+			<Icon name="bars" />
+		</button>
+		<a class="blog-brand" href={locale === 'zh' ? '/zh/' : '/'}>
+			{site.title}
+		</a>
+	</div>
+	<div class="blog-header-search">
+		<InlineSearch />
+	</div>
+	<div class="blog-header-end">
+		<a class="blog-github-link" href={site.github} rel="me" aria-label={ui[locale].github}>
+			<Icon name="github" />
+		</a>
+		<ThemeSettings />
+	</div>
+</header>
+
+<style>
+	.blog-header {
+		display: grid;
+		grid-template-columns: minmax(0, 1fr) minmax(0, 28rem) minmax(0, 1fr);
+		align-items: center;
+		gap: 1rem;
+		min-height: var(--blog-header-height);
+		padding: 0.55rem 1rem;
+		border-bottom: 1px solid var(--sl-color-hairline-shade);
+		background: var(--sl-color-bg-nav);
+	}
+
+	.blog-header-start,
+	.blog-header-end {
+		display: flex;
+		align-items: center;
+		gap: 0.7rem;
+		min-width: 0;
+	}
+
+	.blog-header-end {
+		justify-content: flex-end;
+	}
+
+	.blog-brand {
+		min-width: 0;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		color: var(--sl-color-text-accent);
+		font-size: clamp(1rem, 2vw, 1.3rem);
+		font-weight: 750;
+		letter-spacing: -0.02em;
+		text-decoration: none;
+		white-space: nowrap;
+	}
+
+	.blog-header-search {
+		min-width: 0;
+	}
+
+	@media (min-width: 50rem) and (max-width: 74rem) {
+		.blog-header {
+			grid-template-columns: minmax(0, max-content) minmax(0, 1fr) auto;
+		}
+	}
+
+	.blog-github-link {
+		display: grid;
+		place-items: center;
+		width: 2.2rem;
+		height: 2.2rem;
+		border-radius: 0.45rem;
+		color: var(--sl-color-text-accent);
+		font-size: 1.1rem;
+		text-decoration: none;
+	}
+
+	.blog-github-link:hover,
+	.blog-github-link:focus-visible {
+		background: var(--sl-color-gray-6);
+	}
+
+	.blog-github-link:focus-visible,
+	.blog-mobile-menu-toggle:focus-visible {
+		outline: 2px solid var(--sl-color-accent);
+		outline-offset: 2px;
+	}
+
+	.blog-mobile-menu-toggle {
+		display: none;
+		place-items: center;
+		width: 2.25rem;
+		height: 2.25rem;
+		border: 1px solid var(--sl-color-hairline-shade);
+		border-radius: 0.45rem;
+		background: transparent;
+		color: var(--sl-color-text);
+		cursor: pointer;
+	}
+
+	@media (max-width: 49.99rem) {
+		.blog-header {
+			grid-template-columns: minmax(0, 1fr) auto;
+			gap: 0.5rem;
+		}
+
+		.blog-header-start {
+			gap: 0.4rem;
+		}
+
+		.blog-mobile-menu-toggle {
+			display: grid;
+		}
+
+		.blog-header-search {
+			grid-column: 1 / -1;
+			grid-row: 2;
+		}
+
+		.blog-header-end {
+			grid-column: 2;
+			grid-row: 1;
+		}
+
+		.blog-github-link {
+			display: none;
+		}
+	}
+</style>

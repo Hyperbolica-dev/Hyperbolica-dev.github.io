@@ -5,13 +5,13 @@
 	aria-orientation="vertical"
 	aria-valuemin="14"
 	aria-valuemax="28"
-	aria-valuenow="19"
-	aria-valuetext="19rem"
+	aria-valuenow="15"
+	aria-valuetext="15rem"
 	tabindex="0"
 	data-blog-sidebar-resizer
 	data-min-width-rem="14"
 	data-max-width-rem="28"
-	data-default-width-rem="19"
+	data-default-width-rem="15"
 	hidden
 ></div>
 
@@ -28,13 +28,24 @@
 		const defaultWidthRem = Number(resizer.dataset.defaultWidthRem);
 
 		const roundWidth = (widthRem) => Math.round(widthRem * 10) / 10;
-		const clampWidth = (widthRem) =>
-			Math.min(maxWidthRem, Math.max(minWidthRem, roundWidth(widthRem)));
+		const clampWidth = (widthRem) => {
+			const shell = document.querySelector('.blog-shell');
+			const rootFontSize = Number.parseFloat(getComputedStyle(root).fontSize) || 16;
+			const availableMax =
+				shell instanceof HTMLElement ? (shell.clientWidth - 400) / rootFontSize : maxWidthRem;
+			return Math.min(
+				maxWidthRem,
+				Math.max(minWidthRem, availableMax),
+				Math.max(minWidthRem, roundWidth(widthRem)),
+			);
+		};
 
 		const readWidth = () => {
 			try {
-				const stored = Number(window.localStorage.getItem(storageKey));
-				return Number.isFinite(stored) ? clampWidth(stored) : defaultWidthRem;
+				const stored = window.localStorage.getItem(storageKey);
+				return stored !== null && Number.isFinite(Number(stored))
+					? clampWidth(Number(stored))
+					: defaultWidthRem;
 			} catch {
 				return defaultWidthRem;
 			}
@@ -128,6 +139,7 @@
 			attributeFilter: ['data-blog-sidebar-collapsed'],
 		});
 		desktopQuery.addEventListener('change', syncViewport);
+		window.addEventListener('resize', syncViewport);
 		syncViewport();
 	})();
 </script>

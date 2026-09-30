@@ -1,11 +1,10 @@
 import { getCollection, type CollectionEntry } from 'astro:content';
 
 import { estimateReadingTime, type ReadingTime } from './reading-time';
+import { normalizeTag } from './tags';
+import type { BlogCategory } from './taxonomy';
 
-export const BLOG_CATEGORIES = ['cognition', 'systems', 'science', 'frontier'] as const;
-
-export type BlogCategory = (typeof BLOG_CATEGORIES)[number];
-export type DocsEntry = CollectionEntry<'docs'>;
+type DocsEntry = CollectionEntry<'docs'>;
 export type BlogArticle = DocsEntry & {
 	data: Extract<DocsEntry['data'], { contentType: 'article' }>;
 };
@@ -15,12 +14,12 @@ export interface TagSummary {
 	count: number;
 }
 
-export interface ChronologicalNeighbors {
+interface ChronologicalNeighbors {
 	older?: BlogArticle;
 	newer?: BlogArticle;
 }
 
-export interface SeriesNavigation {
+interface SeriesNavigation {
 	id: string;
 	title: string;
 	order: number;
@@ -35,34 +34,15 @@ export interface ArticlePageContext {
 	series?: SeriesNavigation;
 }
 
-const STANDALONE_PAGE_IDS = new Set(['index', 'about', '404']);
-const CATEGORY_ENTRY_IDS = new Set<string>(BLOG_CATEGORIES);
-
-export function isCategoryEntry(entry: DocsEntry): boolean {
-	return CATEGORY_ENTRY_IDS.has(entry.id);
+function isBlogArticle(entry: DocsEntry): entry is BlogArticle {
+	return entry.data.contentType === 'article';
 }
 
-export function isStandalonePage(entry: DocsEntry): boolean {
-	return STANDALONE_PAGE_IDS.has(entry.id);
+function isPublicArticle(entry: DocsEntry): entry is BlogArticle {
+	return isBlogArticle(entry) && !entry.data.draft;
 }
 
-export function isNonArticlePage(entry: DocsEntry): boolean {
-	return isStandalonePage(entry) || isCategoryEntry(entry);
-}
-
-export function isBlogArticle(entry: DocsEntry): entry is BlogArticle {
-	return entry.data.contentType === 'article' && !isNonArticlePage(entry);
-}
-
-export function isDraft(entry: DocsEntry): boolean {
-	return entry.data.draft;
-}
-
-export function isPublicArticle(entry: DocsEntry): entry is BlogArticle {
-	return isBlogArticle(entry) && !isDraft(entry);
-}
-
-export function sortArticlesByPublishedAt(articles: readonly BlogArticle[]): BlogArticle[] {
+function sortArticlesByPublishedAt(articles: readonly BlogArticle[]): BlogArticle[] {
 	return [...articles].sort((left, right) => {
 		const dateDifference = right.data.publishedAt.getTime() - left.data.publishedAt.getTime();
 		return dateDifference || compareStrings(left.id, right.id);
@@ -101,7 +81,7 @@ export function getArticleReadingTime(article: BlogArticle): ReadingTime {
 	return estimateReadingTime(article.body ?? '');
 }
 
-export function getChronologicalNeighbors(
+function getChronologicalNeighbors(
 	articles: readonly BlogArticle[],
 	currentId: string,
 ): ChronologicalNeighbors {
@@ -114,7 +94,7 @@ export function getChronologicalNeighbors(
 	};
 }
 
-export function getSeriesNavigation(
+function getSeriesNavigation(
 	articles: readonly BlogArticle[],
 	currentId: string,
 ): SeriesNavigation | undefined {
@@ -152,15 +132,6 @@ export async function getArticlePageContext(id: string): Promise<ArticlePageCont
 		chronology: getChronologicalNeighbors(articles, id),
 		series: getSeriesNavigation(articles, id),
 	};
-}
-
-function normalizeTag(tag: string): string {
-	return tag
-		.normalize('NFKC')
-		.trim()
-		.toLocaleLowerCase('en-US')
-		.replace(/\s+/gu, '-')
-		.replace(/-+/gu, '-');
 }
 
 function compareStrings(left: string, right: string): number {

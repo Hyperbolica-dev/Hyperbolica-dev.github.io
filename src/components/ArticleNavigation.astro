@@ -1,60 +1,65 @@
 ---
 import { getArticlePageContext, type BlogArticle } from '../lib/content';
+import { localeFromPath, ui } from '../lib/locale';
 
 const currentId = Astro.locals.starlightRoute.entry.id;
 const context = await getArticlePageContext(currentId);
+const locale = localeFromPath(Astro.url.pathname);
+const labels = ui[locale];
 
 function articleHref(article: BlogArticle): string {
 	return `/${article.id}/`;
 }
 ---
 
-{
-	context && (
-		<div class="article-navigation" data-article-ui="navigation">
-			{context.series && (
-				<section class="series-navigation" aria-labelledby="article-series-title">
-					<p class="navigation-label">Series</p>
-					<h2 id="article-series-title">{context.series.title}</h2>
-					<p class="series-order">Part {context.series.order}</p>
-					{(context.series.previous || context.series.next) && (
-						<nav class="navigation-grid" aria-label="Series article navigation">
-							{context.series.previous && (
-								<a href={articleHref(context.series.previous)} data-series-direction="previous">
-									<span>Previous in series</span>
-									<strong>{context.series.previous.data.title}</strong>
-								</a>
-							)}
-							{context.series.next && (
-								<a class="next" href={articleHref(context.series.next)} data-series-direction="next">
-									<span>Next in series</span>
-									<strong>{context.series.next.data.title}</strong>
-								</a>
-							)}
-						</nav>
-					)}
-				</section>
-			)}
+{context && (
+	<div class="article-navigation" data-article-ui="navigation">
+		{context.series && (
+			<section class="series-navigation" aria-labelledby="article-series-title">
+				<p class="navigation-label">{labels.series}</p>
+				<h2 id="article-series-title">{context.series.title}</h2>
+				<p class="series-order">{labels.part(context.series.order)}</p>
+				{(context.series.previous || context.series.next) && (
+					<nav class="navigation-grid" aria-label={labels.seriesNavigation}>
+						{context.series.previous && (
+							<a href={articleHref(context.series.previous)} data-series-direction="previous">
+								<span>{labels.previousInSeries}</span>
+								<strong>{context.series.previous.data.title}</strong>
+							</a>
+						)}
+						{context.series.next && (
+							<a class="next" href={articleHref(context.series.next)} data-series-direction="next">
+								<span>{labels.nextInSeries}</span>
+								<strong>{context.series.next.data.title}</strong>
+							</a>
+						)}
+					</nav>
+				)}
+			</section>
+		)}
 
-			{(context.chronology.older || context.chronology.newer) && (
-				<nav class="navigation-grid chronology" aria-label="Chronological article navigation">
-					{context.chronology.older && (
-						<a href={articleHref(context.chronology.older)} data-chronology-direction="older">
-							<span>Older article</span>
-							<strong>{context.chronology.older.data.title}</strong>
-						</a>
-					)}
-					{context.chronology.newer && (
-						<a class="next" href={articleHref(context.chronology.newer)} data-chronology-direction="newer">
-							<span>Newer article</span>
-							<strong>{context.chronology.newer.data.title}</strong>
-						</a>
-					)}
-				</nav>
-			)}
-		</div>
-	)
-}
+		{(context.chronology.older || context.chronology.newer) && (
+			<nav class="navigation-grid chronology" aria-label={labels.chronologicalNavigation}>
+				{context.chronology.older && (
+					<a href={articleHref(context.chronology.older)} data-chronology-direction="older">
+						<span>{labels.olderArticle}</span>
+						<strong>{context.chronology.older.data.title}</strong>
+					</a>
+				)}
+				{context.chronology.newer && (
+					<a
+						class="next"
+						href={articleHref(context.chronology.newer)}
+						data-chronology-direction="newer"
+					>
+						<span>{labels.newerArticle}</span>
+						<strong>{context.chronology.newer.data.title}</strong>
+					</a>
+				)}
+			</nav>
+		)}
+	</div>
+)}
 
 <style>
 	.article-navigation {

@@ -1,24 +1,36 @@
 {
-  "name": "hyperbolica-dev-github-io",
-  "type": "module",
-  "version": "0.0.1",
-  "scripts": {
-    "dev": "astro dev",
-    "start": "astro dev",
-    "build": "astro build",
-    "preview": "astro preview",
-    "astro": "astro"
-  },
-  "dependencies": {
-    "@astrojs/markdown-remark": "^7.3.1",
-    "@astrojs/starlight": "^0.42.2",
-    "astro": "^7.2.10",
-    "katex": "^0.18.7",
+	"name": "hyperbolica-dev-github-io",
+	"type": "module",
+	"version": "0.0.1",
+	"scripts": {
+		"dev": "astro dev",
+		"start": "astro dev",
+		"build": "astro build",
+		"preview": "astro preview",
+		"astro": "astro",
+		"quality": "astro check && eslint . && prettier --check \"src/**/*.{astro,ts,css}\" astro.config.mjs eslint.config.mjs package.json knip.jsonc .prettierrc.json \"docs/*.md\" README.md AGENTS.md \".agents/skills/**/*.md\" \".github/workflows/*.yml\" && knip && astro build"
+	},
+	"dependencies": {
+		"@astrojs/markdown-remark": "^7.3.1",
+		"@astrojs/starlight": "^0.42.2",
+		"astro": "^7.2.10",
+		"katex": "^0.18.7",
 		"rehype-katex": "^7.0.1",
 		"remark-math": "^6.0.0",
 		"sharp": "^0.35.3"
-  },
-  "allowScripts": {
-    "esbuild": true
-  }
+	},
+	"allowScripts": {
+		"esbuild": true
+	},
+	"devDependencies": {
+		"@astrojs/check": "^0.9.10",
+		"@eslint/js": "^10.0.1",
+		"@typescript-eslint/parser": "^8.71.0",
+		"eslint": "^10.11.0",
+		"eslint-plugin-astro": "^3.2.1",
+		"knip": "^6.39.0",
+		"prettier": "^3.9.9",
+		"prettier-plugin-astro": "^1.1.0",
+		"typescript": "^6.0.3"
+	}
 }

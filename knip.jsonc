@@ -1,0 +1,4 @@
+{
+	"ignoreDependencies": ["katex"],
+	"ignoreUnresolved": ["/pagefind/pagefind.js"],
+}

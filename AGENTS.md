@@ -6,7 +6,7 @@
 - Deployments target the root GitHub Pages site: `https://hyperbolica-dev.github.io`.
 - Do not introduce Gatsby, a database, an online CMS, or a server-side content store.
 - Blog content belongs in `src/content/docs/` as Markdown or MDX.
-- The four top-level content categories are `cognition`, `systems`, `science`, and `frontier`.
+- Top-level category IDs and labels are defined in `src/lib/taxonomy.ts`.
 
 ## Content rules
 
@@ -30,11 +30,12 @@ Run from the repository root:
 
 ```sh
 npm run dev
+npm run quality
 npm run build
 npm run preview
 ```
 
-The production build must pass before handing off a phase. GitHub Pages uses `.github/workflows/deploy.yml` and the `dist/` output.
+The quality command must pass before handoff. GitHub Pages uses `.github/workflows/deploy.yml` and the `dist/` output.
 
 ## Change discipline
 

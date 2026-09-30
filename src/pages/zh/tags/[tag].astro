@@ -1,0 +1,24 @@
+---
+import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
+import ArticleList from '../../../components/ArticleList.astro';
+import { getTagCollection } from '../../../lib/content';
+
+export async function getStaticPaths() {
+	return (await getTagCollection()).map(({ tag, count }) => ({
+		params: { tag },
+		props: { tag, count },
+	}));
+}
+
+interface Props {
+	tag: string;
+	count: number;
+}
+const { tag, count } = Astro.props;
+---
+
+<StarlightPage
+	frontmatter={{ title: `标签：${tag}`, description: `“${tag}”标签下的 ${count} 篇公开文章。` }}
+>
+	<ArticleList tag={tag} locale="zh" emptyMessage={`“${tag}”标签下还没有公开文章。`} />
+</StarlightPage>
