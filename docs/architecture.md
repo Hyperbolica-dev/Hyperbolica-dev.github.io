@@ -37,7 +37,9 @@ Starlight’s optional `i18n` collection is declared explicitly with an empty En
 
 Starlight supplies the desktop shell: left navigation, central content, and a right table of contents. Its responsive breakpoint changes the page to a single-column mobile layout and exposes the navigation through the mobile menu.
 
-`src/styles/site.css` defines `--blog-sidebar-width` as the width contract for future sidebar collapse and drag-resize behavior. Future interaction code should update this token rather than hard-coding a second width value. The Phase 0 shell keeps Starlight's built-in mobile navigation behavior.
+`src/styles/site.css` defines `--blog-sidebar-width` as the width contract for the left navigation column; its collapse and drag-resize controls update this token without changing the content model. The desktop table-of-contents column has an independent `--blog-toc-width` contract and drag-only resizer, including a zero-width collapsed state with a recoverable hit area; Starlight's built-in mobile navigation and mobile table of contents remain single-column.
+
+Supporting browsers use a short root-only cross-document View Transition; reduced-motion preferences disable it and minimize other site motion without changing interaction behavior.
 
 ## Search and language
 

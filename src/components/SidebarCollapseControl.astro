@@ -1,0 +1,65 @@
+<button
+	type="button"
+	id="blog-sidebar-collapse-control"
+	class="blog-sidebar-collapse-control"
+	aria-controls="starlight__sidebar"
+	aria-expanded="true"
+	aria-label="Collapse navigation"
+	title="Collapse navigation"
+>
+	<span class="blog-sidebar-collapse-icon" aria-hidden="true"></span>
+	<span class="blog-sidebar-collapse-label">Collapse navigation</span>
+</button>
+
+<script is:inline>
+	(() => {
+		const storageKey = 'hyperbolica-sidebar-collapsed';
+		const desktopQuery = window.matchMedia('(min-width: 50rem)');
+		const root = document.documentElement;
+
+		const readPreference = () => {
+			try {
+				return window.localStorage.getItem(storageKey) === 'true';
+			} catch {
+				return false;
+			}
+		};
+
+		const setCollapsed = (collapsed, persist = false) => {
+			root.toggleAttribute('data-blog-sidebar-collapsed', collapsed);
+
+			const button = document.getElementById('blog-sidebar-collapse-control');
+			if (button) {
+				button.setAttribute('aria-expanded', String(!collapsed));
+				button.setAttribute('aria-label', collapsed ? 'Expand navigation' : 'Collapse navigation');
+				button.setAttribute('title', collapsed ? 'Expand navigation' : 'Collapse navigation');
+			}
+
+			if (persist) {
+				try {
+					window.localStorage.setItem(storageKey, String(collapsed));
+				} catch {
+					// Private browsing and blocked storage should not disable the control.
+				}
+			}
+		};
+
+		const syncViewport = () => {
+			if (desktopQuery.matches) {
+				setCollapsed(readPreference());
+			} else {
+				root.removeAttribute('data-blog-sidebar-collapsed');
+			}
+		};
+
+		syncViewport();
+		desktopQuery.addEventListener('change', syncViewport);
+
+		const button = document.getElementById('blog-sidebar-collapse-control');
+		button?.addEventListener('click', () => {
+			if (desktopQuery.matches) {
+				setCollapsed(!root.hasAttribute('data-blog-sidebar-collapsed'), true);
+			}
+		});
+	})();
+</script>

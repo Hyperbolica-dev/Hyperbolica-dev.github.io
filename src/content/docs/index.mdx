@@ -3,7 +3,16 @@ title: Hyperbolica
 description: A personal blog foundation for notes across cognition, systems, science, and frontier.
 ---
 
-This is the Phase 0 home page. Content will be added in a later phase.
+import ArticleList from '../../components/ArticleList.astro';
+
+Notes and essays across cognition, systems, science, and the technological frontier.
+
+## Latest articles
+
+<ArticleList
+  limit={6}
+  emptyMessage="No public articles yet. Drafts stay private until they are ready to publish."
+/>
 
 ## Categories
 
@@ -11,3 +20,4 @@ This is the Phase 0 home page. Content will be added in a later phase.
 - [Systems](/systems/)
 - [Science](/science/)
 - [Frontier](/frontier/)
+- [Tags](/tags/)

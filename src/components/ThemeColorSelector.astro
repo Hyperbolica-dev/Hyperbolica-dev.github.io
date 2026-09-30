@@ -1,0 +1,75 @@
+<div class="blog-theme-color-selector" data-blog-accent-selector>
+	<p class="blog-theme-color-label" id="blog-theme-color-label">Theme color</p>
+	<div class="blog-theme-color-options" role="group" aria-labelledby="blog-theme-color-label">
+		<button
+			type="button"
+			class="blog-theme-color-option"
+			data-blog-accent-choice="cyan"
+			aria-pressed="true"
+		>
+			<span class="blog-theme-color-swatch" aria-hidden="true"></span>
+			<span>Cyan</span>
+		</button>
+		<button
+			type="button"
+			class="blog-theme-color-option"
+			data-blog-accent-choice="violet"
+			aria-pressed="false"
+		>
+			<span class="blog-theme-color-swatch" aria-hidden="true"></span>
+			<span>Violet</span>
+		</button>
+		<button
+			type="button"
+			class="blog-theme-color-option"
+			data-blog-accent-choice="amber"
+			aria-pressed="false"
+		>
+			<span class="blog-theme-color-swatch" aria-hidden="true"></span>
+			<span>Amber</span>
+		</button>
+	</div>
+</div>
+
+<script is:inline>
+	(() => {
+		const storageKey = 'hyperbolica-theme-color';
+		const allowedAccents = new Set(['cyan', 'violet', 'amber']);
+		const root = document.documentElement;
+		const options = Array.from(document.querySelectorAll('[data-blog-accent-choice]'));
+
+		const readPreference = () => {
+			try {
+				const stored = window.localStorage.getItem(storageKey);
+				return allowedAccents.has(stored) ? stored : 'cyan';
+			} catch {
+				return 'cyan';
+			}
+		};
+
+		const applyAccent = (accent, persist = false) => {
+			if (!allowedAccents.has(accent)) return;
+
+			root.dataset.blogAccent = accent;
+			options.forEach((option) => {
+				const selected = option.dataset.blogAccentChoice === accent;
+				option.setAttribute('aria-pressed', String(selected));
+			});
+
+			if (persist) {
+				try {
+					window.localStorage.setItem(storageKey, accent);
+				} catch {
+					// Private browsing and blocked storage should not disable the selector.
+				}
+			}
+		};
+
+		applyAccent(readPreference());
+		options.forEach((option) => {
+			option.addEventListener('click', () => {
+				applyAccent(option.dataset.blogAccentChoice, true);
+			});
+		});
+	})();
+</script>

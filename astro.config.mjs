@@ -17,6 +17,12 @@ export default defineConfig({
 		starlight({
 			title: 'Hyperbolica',
 			description: 'A personal blog for notes across cognition, systems, science, and frontier.',
+			components: {
+				PageFrame: './src/components/overrides/PageFrame.astro',
+				TwoColumnContent: './src/components/overrides/TwoColumnContent.astro',
+				PageTitle: './src/components/overrides/ArticlePageTitle.astro',
+				Footer: './src/components/overrides/ArticleFooter.astro',
+			},
 			disable404Route: true,
 			favicon: '/favicon.svg',
 			social: [
@@ -37,15 +43,12 @@ export default defineConfig({
 			sidebar: [
 				{
 					label: 'Navigate',
-					items: [{ label: 'About', slug: 'about' }],
-				},
-				{
-					label: 'Categories',
 					items: [
 						{ label: 'Cognition', slug: 'cognition' },
 						{ label: 'Systems', slug: 'systems' },
 						{ label: 'Science', slug: 'science' },
 						{ label: 'Frontier', slug: 'frontier' },
+						{ label: 'Tags', link: '/tags/' },
 					],
 				},
 			],

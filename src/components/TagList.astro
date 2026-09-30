@@ -1,0 +1,57 @@
+---
+import { getTagCollection } from '../lib/content';
+
+const tags = await getTagCollection();
+---
+
+{
+	tags.length > 0 ? (
+		<ul class="tag-list">
+			{tags.map(({ tag, count }) => (
+				<li>
+					<a href={`/tags/${encodeURIComponent(tag)}/`}>
+						<span>{tag}</span>
+						<span class="tag-count">{count} {count === 1 ? 'article' : 'articles'}</span>
+					</a>
+				</li>
+			))}
+		</ul>
+	) : (
+		<p class="empty-state">No public tags yet. Tags appear after an article is published.</p>
+	)
+}
+
+<style>
+	.tag-list {
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(min(100%, 12rem), 1fr));
+		gap: 0.75rem;
+		list-style: none;
+		margin-block: 1rem 0;
+		padding: 0;
+	}
+
+	.tag-list a {
+		display: flex;
+		align-items: baseline;
+		justify-content: space-between;
+		gap: 0.75rem;
+		border: 1px solid var(--sl-color-gray-5);
+		border-radius: 0.5rem;
+		padding: 0.75rem 0.9rem;
+		text-decoration: none;
+		overflow-wrap: anywhere;
+	}
+
+	.tag-count {
+		color: var(--sl-color-gray-2);
+		font-size: var(--sl-text-xs);
+		white-space: nowrap;
+	}
+
+	.empty-state {
+		border-inline-start: 0.2rem solid var(--sl-color-gray-5);
+		color: var(--sl-color-gray-2);
+		padding-inline-start: 0.9rem;
+	}
+</style>
