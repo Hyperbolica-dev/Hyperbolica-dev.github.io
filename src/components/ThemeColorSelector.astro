@@ -41,16 +41,20 @@
 		const readPreference = () => {
 			try {
 				const stored = window.localStorage.getItem(storageKey);
-				return allowedAccents.has(stored) ? stored : 'cyan';
+				return {
+					accent: allowedAccents.has(stored) ? stored : 'cyan',
+					custom: allowedAccents.has(stored),
+				};
 			} catch {
-				return 'cyan';
+				return { accent: 'cyan', custom: false };
 			}
 		};
 
-		const applyAccent = (accent, persist = false) => {
+		const applyAccent = (accent, persist = false, custom = persist) => {
 			if (!allowedAccents.has(accent)) return;
 
 			root.dataset.blogAccent = accent;
+			root.toggleAttribute('data-blog-accent-custom', custom);
 			options.forEach((option) => {
 				const selected = option.dataset.blogAccentChoice === accent;
 				option.setAttribute('aria-pressed', String(selected));
@@ -65,10 +69,11 @@
 			}
 		};
 
-		applyAccent(readPreference());
+		const preference = readPreference();
+		applyAccent(preference.accent, false, preference.custom);
 		options.forEach((option) => {
 			option.addEventListener('click', () => {
-				applyAccent(option.dataset.blogAccentChoice, true);
+				applyAccent(option.dataset.blogAccentChoice, true, true);
 			});
 		});
 	})();
