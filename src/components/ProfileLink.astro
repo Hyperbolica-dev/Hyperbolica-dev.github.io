@@ -1,9 +1,25 @@
 ---
 import avatar from '../assets/tanh_avatar.png';
+import darkAvatar from '../assets/tanh_avatar-dark.png';
 ---
 
 <a class="blog-profile-link" href="/about/" aria-label="About Hyperbolica-dev — GitHub profile">
-	<img class="blog-profile-avatar" src={avatar.src} alt="" width="48" height="48" loading="lazy" />
+	<img
+		class="blog-profile-avatar blog-profile-avatar-light"
+		src={avatar.src}
+		alt=""
+		width="48"
+		height="48"
+		loading="lazy"
+	/>
+	<img
+		class="blog-profile-avatar blog-profile-avatar-dark"
+		src={darkAvatar.src}
+		alt=""
+		width="48"
+		height="48"
+		loading="lazy"
+	/>
 	<span class="blog-profile-copy">
 		<strong>Hyperbolica-dev</strong>
 		<span>GitHub profile</span>
@@ -41,8 +57,26 @@ import avatar from '../assets/tanh_avatar.png';
 		object-fit: contain;
 	}
 
-	:global(html[data-theme='dark']) .blog-profile-avatar {
-		filter: invert(1);
+	.blog-profile-avatar-dark {
+		display: none;
+	}
+
+	:global(html[data-theme='dark']) .blog-profile-avatar-light {
+		display: none;
+	}
+
+	:global(html[data-theme='dark']) .blog-profile-avatar-dark {
+		display: block;
+	}
+
+	@media (prefers-color-scheme: dark) {
+		:global(html[data-theme='auto']) .blog-profile-avatar-light {
+			display: none;
+		}
+
+		:global(html[data-theme='auto']) .blog-profile-avatar-dark {
+			display: block;
+		}
 	}
 
 	.blog-profile-copy {
