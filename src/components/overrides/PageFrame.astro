@@ -1,140 +1,151 @@
 ---
-import MobileMenuToggle from 'virtual:starlight/components/MobileMenuToggle';
-import SidebarCollapseControl from '../SidebarCollapseControl.astro';
-import SidebarRail from '../SidebarRail.astro';
-import ProfileLink from '../ProfileLink.astro';
+import BlogSidebar from '../BlogSidebar.astro';
 import SidebarResizeControl from '../SidebarResizeControl.astro';
-import ThemeSettings from '../ThemeSettings.astro';
 
 const { hasSidebar } = Astro.locals.starlightRoute;
 ---
 
-<div class="page sl-flex">
-	<header class="header"><slot name="header" /><ThemeSettings /></header>
-	{
-		hasSidebar && (
-			<nav class="sidebar print:hidden" aria-label={Astro.locals.t('sidebarNav.accessibleLabel')}>
-				<MobileMenuToggle />
-				<script>
-					// The mobile menu uses the popover API to open and close without JavaScript. We enhance this
-					// behaviour with focus trapping while the menu is open.
-					class StarlightSidebarPane extends HTMLElement {
-						constructor() {
-							super();
-
-							const desktopMediaQuery = matchMedia('(min-width: 50em)');
-
-							// Remove the popover attribute on desktop viewports. It's only needed for the mobile menu.
-							const resetPopoverAttribute = () => {
-								this.popover = desktopMediaQuery.matches ? null : 'auto';
-							};
-							resetPopoverAttribute();
-							desktopMediaQuery.addEventListener('change', () => resetPopoverAttribute());
-
-							// Update the menu state when the sidebar popover is toggled.
-							this.addEventListener('toggle', ({ newState }) => this.trapFocus(newState === 'open'));
-						}
-						/** Trap keyboard focus inside the header and menu when the menu is expanded. */
-						trapFocus(shouldTrap) {
-							document.querySelectorAll('.main-frame, .sl-skip-link').forEach((el) => {
-								el.toggleAttribute('inert', shouldTrap);
-							});
-						}
-					}
-					customElements.define('sl-sidebar-pane', StarlightSidebarPane);
-				</script>
-				<sl-sidebar-pane popover="" id="starlight__sidebar" class="sidebar-pane">
-					<div class="sidebar-content sl-flex">
-						<SidebarCollapseControl />
-						<SidebarRail />
-						<slot name="sidebar" />
-						<ProfileLink />
-					</div>
-				</sl-sidebar-pane>
+<div class="blog-page">
+	<div class="blog-shell">
+		<slot name="header" />
+		{hasSidebar && (
+			<div class="blog-shell-body">
+				<aside
+					id="blog-sidebar-column"
+					class="blog-sidebar-column print:hidden"
+					aria-label="Site navigation"
+				>
+					<sl-sidebar-pane popover="" id="starlight__sidebar" class="sidebar-pane">
+						<BlogSidebar />
+					</sl-sidebar-pane>
+				</aside>
+				<div class="blog-main-frame">
+					<slot />
+				</div>
 				<SidebarResizeControl />
-			</nav>
-		)
-	}
-	<div class="main-frame"><slot /></div>
+			</div>
+		)}
+	</div>
 </div>
+
+<script is:inline>
+	(() => {
+		if (customElements.get('sl-sidebar-pane')) return;
+		class StarlightSidebarPane extends HTMLElement {
+			constructor() {
+				super();
+				const desktopMediaQuery = matchMedia('(min-width: 50rem)');
+				const resetPopoverAttribute = () => {
+					this.popover = desktopMediaQuery.matches ? null : 'auto';
+				};
+				resetPopoverAttribute();
+				desktopMediaQuery.addEventListener('change', resetPopoverAttribute);
+				this.addEventListener('toggle', ({ newState }) => {
+					document.querySelectorAll('.blog-main-frame, .sl-skip-link').forEach((element) => {
+						element.toggleAttribute('inert', newState === 'open');
+					});
+				});
+			}
+		}
+		customElements.define('sl-sidebar-pane', StarlightSidebarPane);
+	})();
+</script>
 
 <style>
 	@layer starlight.core {
-		.page {
-			flex-direction: column;
+		.blog-page {
 			min-height: 100vh;
+			padding: 1rem;
+			background: var(--blog-page-background);
 		}
 
-		.header {
-			z-index: var(--sl-z-index-navbar);
-			position: fixed;
-			inset-inline-start: 0;
-			inset-block-start: 0;
-			width: 100%;
-			height: var(--sl-nav-height);
-			border-bottom: 1px solid var(--sl-color-hairline-shade);
-			padding: var(--sl-nav-pad-y) var(--sl-nav-pad-x);
-			padding-inline-end: var(--sl-nav-pad-x);
-			background-color: var(--sl-color-bg-nav);
+		.blog-shell {
+			position: relative;
+			width: min(100%, var(--blog-shell-max-width));
+			min-height: calc(100vh - 2rem);
+			margin-inline: auto;
+			overflow: hidden;
+			border: 1px solid var(--sl-color-hairline-shade);
+			border-radius: 1rem;
+			background: var(--sl-color-bg);
+			box-shadow: var(--blog-shell-shadow);
 		}
 
-		:global(.header starlight-theme-select) {
-			display: none;
+		.blog-shell-body {
+			display: grid;
+			grid-template-columns: var(--blog-sidebar-width) minmax(0, 1fr);
+			min-height: calc(100vh - var(--blog-header-height) - 2rem);
+			transition: grid-template-columns 150ms ease;
 		}
 
-		:global([data-has-sidebar]) .header {
-			padding-inline-end: calc(
-				var(--sl-nav-gap) + var(--sl-nav-pad-x) + var(--sl-menu-button-size)
-			);
+		.blog-sidebar-column {
+			min-width: 0;
+			background: var(--sl-color-bg-sidebar);
+			border-inline-end: 1px solid var(--sl-color-hairline-shade);
 		}
 
 		.sidebar-pane {
-			/* By default, user agents apply some opinionated styles to popovers, which we don’t want. */
-			border: unset;
-			padding: unset;
-			height: unset;
-			color: unset;
-
-			position: fixed;
-			z-index: var(--sl-z-index-menu);
-			inset-block: var(--sl-nav-height) 0;
-			inset-inline-start: 0;
+			position: sticky;
+			top: 0;
 			width: 100%;
-			background-color: var(--sl-color-black);
+			height: calc(100vh - var(--blog-header-height) - 2rem);
+			max-height: calc(100vh - var(--blog-header-height) - 2rem);
+			border: 0;
+			margin: 0;
+			padding: 0;
+			background: transparent;
+			color: inherit;
 			overflow-y: auto;
-			scrollbar-gutter: stable;
+			overflow-x: hidden;
 		}
 
-		.sidebar-content {
-			height: 100%;
-			min-height: max-content;
-			padding: 1rem var(--sl-sidebar-pad-x) 0;
-			flex-direction: column;
-			gap: 1rem;
+		.blog-main-frame {
+			min-width: 0;
+			min-height: 100%;
+			padding: 0;
 		}
 
-		@media (min-width: 50rem) {
-			.sidebar-content::after {
-				content: '';
-				padding-bottom: 1px;
+		@media (max-width: 49.99rem) {
+			.blog-page {
+				padding: 0;
 			}
-		}
 
-		.main-frame {
-			padding-top: calc(var(--sl-nav-height) + var(--sl-mobile-toc-height));
-			padding-inline-start: var(--sl-content-inline-start);
-		}
-
-		@media (min-width: 50rem) {
-			:global([data-has-sidebar]) .header {
-				padding-inline-end: var(--sl-nav-pad-x);
+			.blog-shell {
+				width: 100%;
+				min-height: 100vh;
+				border: 0;
+				border-radius: 0;
+				box-shadow: none;
 			}
-			.sidebar-pane {
-				/* Make the sidebar visible on larger screens instead of deferring to popover state. */
+
+			.blog-shell-body {
 				display: block;
-				width: var(--sl-sidebar-width);
-				background-color: var(--sl-color-bg-sidebar);
-				border-inline-end: 1px solid var(--sl-color-hairline-shade);
+				min-height: calc(100vh - var(--blog-header-height));
+			}
+
+			.blog-sidebar-column {
+				border: 0;
+			}
+
+			.sidebar-pane {
+				position: fixed;
+				z-index: var(--sl-z-index-menu);
+				inset: var(--blog-header-height) 0 0;
+				width: min(22rem, 88vw);
+				height: auto;
+				max-height: none;
+				background: var(--sl-color-bg-sidebar);
+				box-shadow: var(--sl-shadow-lg);
+			}
+
+			.blog-main-frame {
+				width: 100%;
+			}
+		}
+
+		@media (min-width: 50rem) {
+			.sidebar-pane {
+				display: block;
 			}
 		}
 	}

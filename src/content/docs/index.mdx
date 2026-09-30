@@ -4,16 +4,18 @@ description: A personal space for thoughts on cognition, systems, science, and t
 ---
 
 import ArticleList from '../../components/ArticleList.astro';
+import CategoryGrid from '../../components/CategoryGrid.astro';
+
+<div id="welcome" class="home-welcome">
 
 Welcome to Hyperbolic Space—a personal space for thoughts on cognition, systems, science, and the technological frontier.
 
 I am drawn to hyperbolic space because it seems inexhaustible: follow one branch deeper, and the space keeps unfolding into new directions and details. As a non-Euclidean geometry, it is both unfamiliar and orderly, with a beauty of its own.
 
-Explore the site through Cognition, Systems, Science, or Frontier.
+</div>
 
-## Latest articles
+<CategoryGrid />
 
-<ArticleList
-  limit={5}
-  emptyMessage="No public articles yet. Drafts stay private until they are ready to publish."
-/>
+## Latest Articles
+
+<ArticleList limit={5} />

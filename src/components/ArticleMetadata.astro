@@ -1,58 +1,68 @@
 ---
 import { getArticlePageContext } from '../lib/content';
+import { localeFromPath, pathForLocale, ui } from '../lib/locale';
+import { categories } from '../lib/taxonomy';
 
 const currentId = Astro.locals.starlightRoute.entry.id;
 const context = await getArticlePageContext(currentId);
-const dateFormatter = new Intl.DateTimeFormat('en', {
+const locale = localeFromPath(Astro.url.pathname);
+const labels = ui[locale];
+const dateFormatter = new Intl.DateTimeFormat(locale === 'zh' ? 'zh-CN' : 'en', {
 	dateStyle: 'long',
 	timeZone: 'UTC',
 });
 ---
 
-{
-	context && (
-		<dl class="article-metadata" data-article-ui="metadata">
+{context && (
+	<dl class="article-metadata" data-article-ui="metadata">
+		<div>
+			<dt>{labels.published}</dt>
+			<dd>
+				<time datetime={context.article.data.publishedAt.toISOString()}>
+					{dateFormatter.format(context.article.data.publishedAt)}
+				</time>
+			</dd>
+		</div>
+		{context.article.data.updatedAt && (
 			<div>
-				<dt>Published</dt>
+				<dt>{labels.updated}</dt>
 				<dd>
-					<time datetime={context.article.data.publishedAt.toISOString()}>
-						{dateFormatter.format(context.article.data.publishedAt)}
+					<time datetime={context.article.data.updatedAt.toISOString()}>
+						{dateFormatter.format(context.article.data.updatedAt)}
 					</time>
 				</dd>
 			</div>
-			{context.article.data.updatedAt && (
-				<div>
-					<dt>Updated</dt>
-					<dd>
-						<time datetime={context.article.data.updatedAt.toISOString()}>
-							{dateFormatter.format(context.article.data.updatedAt)}
-						</time>
-					</dd>
-				</div>
-			)}
-			<div>
-				<dt>Category</dt>
-				<dd><a href={`/${context.article.data.category}/`}>{context.article.data.category}</a></dd>
+		)}
+		<div>
+			<dt>{labels.category}</dt>
+			<dd>
+				<a href={pathForLocale(`/${context.article.data.category}/`, locale)}>
+					{categories[context.article.data.category][locale].label}
+				</a>
+			</dd>
+		</div>
+		<div>
+			<dt>{labels.readingTime}</dt>
+			<dd>
+				{context.readingTime.minutes} {labels.readTime}
+			</dd>
+		</div>
+		{context.article.data.tags.length > 0 && (
+			<div class="tag-metadata">
+				<dt>{labels.tags}</dt>
+				<dd>
+					<ul>
+						{context.article.data.tags.map((tag) => (
+							<li>
+								<a href={pathForLocale(`/tags/${encodeURIComponent(tag)}/`, locale)}>{tag}</a>
+							</li>
+						))}
+					</ul>
+				</dd>
 			</div>
-			<div>
-				<dt>Reading time</dt>
-				<dd>{context.readingTime.minutes} min read</dd>
-			</div>
-			{context.article.data.tags.length > 0 && (
-				<div class="tag-metadata">
-					<dt>Tags</dt>
-					<dd>
-						<ul>
-							{context.article.data.tags.map((tag) => (
-								<li><a href={`/tags/${encodeURIComponent(tag)}/`}>{tag}</a></li>
-							))}
-						</ul>
-					</dd>
-				</div>
-			)}
-		</dl>
-	)
-}
+		)}
+	</dl>
+)}
 
 <style>
 	.article-metadata {

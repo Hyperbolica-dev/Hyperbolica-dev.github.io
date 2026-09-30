@@ -1,32 +1,53 @@
+---
+import { Icon } from '@astrojs/starlight/components';
+import { localeFromPath, ui } from '../lib/locale';
+const labels = ui[localeFromPath(Astro.url.pathname)];
+---
+
 <div class="blog-settings" data-blog-settings>
 	<button
 		type="button"
 		class="blog-settings-button"
-		aria-label="Open settings"
+		aria-label={labels.settings}
 		aria-expanded="false"
 		aria-controls="blog-settings-panel"
-		title="Settings"
+		title={labels.settings}
 	>
-		<span aria-hidden="true">⚙</span>
+		<Icon name="setting" />
 	</button>
 	<div id="blog-settings-panel" class="blog-settings-panel" hidden>
 		<section aria-labelledby="blog-settings-theme-label">
-			<h2 id="blog-settings-theme-label">Theme</h2>
-			<select data-blog-theme-select aria-label="Theme">
-				<option value="light">Light</option>
-				<option value="dark">Dark</option>
-				<option value="auto">Auto</option>
-			</select>
+			<h2 id="blog-settings-theme-label">{labels.theme}</h2>
+			<div class="blog-settings-modes" role="group" aria-labelledby="blog-settings-theme-label">
+				<button type="button" data-blog-theme-choice="light" aria-pressed="false">
+					<Icon name="sun" />
+					{labels.light}
+				</button>
+				<button type="button" data-blog-theme-choice="dark" aria-pressed="false">
+					<Icon name="moon" />
+					{labels.night}
+				</button>
+				<button type="button" data-blog-theme-choice="auto" aria-pressed="false">
+					<Icon name="desktop" />
+					{labels.auto}
+				</button>
+			</div>
 		</section>
 		<section aria-labelledby="blog-settings-color-label">
-			<h2 id="blog-settings-color-label">Theme color</h2>
+			<h2 id="blog-settings-color-label">{labels.themeColor}</h2>
 			<div class="blog-settings-colors" role="group" aria-labelledby="blog-settings-color-label">
-				<button type="button" data-blog-accent-choice="cyan">Cyan</button>
-				<button type="button" data-blog-accent-choice="violet">Violet</button>
-				<button type="button" data-blog-accent-choice="amber">Amber</button>
+				<button type="button" data-blog-accent-choice="cyan">
+					Cyan
+				</button>
+				<button type="button" data-blog-accent-choice="violet">
+					Violet
+				</button>
+				<button type="button" data-blog-accent-choice="amber">
+					Amber
+				</button>
 				<label>
-					<span>Custom</span>
-					<input type="color" value="#38bdf8" data-blog-custom-color aria-label="Custom theme color" />
+					<span>{labels.custom}</span>
+					<input type="color" value="#8b5cf6" data-blog-custom-color aria-label={labels.custom} />
 				</label>
 			</div>
 		</section>
@@ -41,7 +62,7 @@
 
 		const button = settings.querySelector('.blog-settings-button');
 		const panel = settings.querySelector('#blog-settings-panel');
-		const themeSelect = settings.querySelector('[data-blog-theme-select]');
+		const themeOptions = [...settings.querySelectorAll('[data-blog-theme-choice]')];
 		const customColor = settings.querySelector('[data-blog-custom-color]');
 		const accentOptions = [...settings.querySelectorAll('[data-blog-accent-choice]')];
 		const themeStorageKey = 'starlight-theme';
@@ -74,7 +95,9 @@
 						: 'dark'
 					: nextTheme;
 			root.dataset.theme = resolvedTheme;
-			if (themeSelect) themeSelect.value = nextTheme;
+			themeOptions.forEach((option) => {
+				option.setAttribute('aria-pressed', String(option.dataset.blogThemeChoice === nextTheme));
+			});
 			window.StarlightThemeProvider?.updatePickers(nextTheme);
 			if (persist) setStored(themeStorageKey, nextTheme === 'auto' ? '' : nextTheme);
 		};
@@ -87,7 +110,7 @@
 				option.setAttribute('aria-pressed', String(option.dataset.blogAccentChoice === accent));
 			});
 			if (accent === 'custom') {
-				const color = getStored(customColorStorageKey, '#38bdf8');
+				const color = getStored(customColorStorageKey, '#8b5cf6');
 				root.style.setProperty('--blog-custom-accent', color);
 				if (customColor instanceof HTMLInputElement) customColor.value = color;
 			}
@@ -101,12 +124,12 @@
 		};
 
 		applyTheme(getStored(themeStorageKey, 'auto'), false);
-		const storedAccent = getStored(accentStorageKey, 'cyan');
-		applyAccent(allowedAccents.has(storedAccent) ? storedAccent : 'cyan', false);
+		const storedAccent = getStored(accentStorageKey, 'violet');
+		applyAccent(allowedAccents.has(storedAccent) ? storedAccent : 'violet', false);
 
 		button?.addEventListener('click', () => openPanel(panel?.hidden ?? true));
-		themeSelect?.addEventListener('change', (event) => {
-			if (event.currentTarget instanceof HTMLSelectElement) applyTheme(event.currentTarget.value);
+		themeOptions.forEach((option) => {
+			option.addEventListener('click', () => applyTheme(option.dataset.blogThemeChoice));
 		});
 		accentOptions.forEach((option) => {
 			option.addEventListener('click', () => applyAccent(option.dataset.blogAccentChoice));
@@ -120,6 +143,12 @@
 		document.addEventListener('click', (event) => {
 			if (event.target instanceof Node && !settings.contains(event.target)) openPanel(false);
 		});
+		document.addEventListener('keydown', (event) => {
+			if (event.key === 'Escape' && !panel?.hidden) {
+				openPanel(false);
+				button?.focus();
+			}
+		});
 		window.matchMedia('(prefers-color-scheme: light)').addEventListener('change', () => {
 			if (!getStored(themeStorageKey, 'auto')) applyTheme('auto', false);
 		});
@@ -128,11 +157,8 @@
 
 <style>
 	.blog-settings {
-		position: absolute;
-		inset-inline-end: var(--sl-nav-pad-x);
-		inset-block-start: 50%;
+		position: relative;
 		z-index: calc(var(--sl-z-index-menu) + 1);
-		transform: translateY(-50%);
 	}
 
 	.blog-settings-button {
@@ -166,7 +192,7 @@
 		inset-block-start: calc(100% + 0.5rem);
 		display: grid;
 		gap: 1rem;
-		width: min(17rem, calc(100vw - 2rem));
+		width: min(18.5rem, calc(100vw - 2rem));
 		border: 1px solid var(--sl-color-hairline-shade);
 		border-radius: 0.65rem;
 		padding: 1rem;
@@ -190,7 +216,7 @@
 		font-weight: 600;
 	}
 
-	.blog-settings-panel select,
+	.blog-settings-modes button,
 	.blog-settings-colors button,
 	.blog-settings-colors label {
 		border: 1px solid var(--sl-color-hairline-shade);
@@ -202,8 +228,37 @@
 		font-size: var(--sl-text-xs);
 	}
 
-	.blog-settings-panel select {
-		width: 100%;
+	.blog-settings-modes {
+		display: grid;
+		grid-template-columns: repeat(3, minmax(0, 1fr));
+		gap: 0.2rem;
+		padding: 0.2rem;
+		border: 1px solid var(--sl-color-hairline-shade);
+		border-radius: 0.55rem;
+		background: var(--sl-color-bg);
+	}
+
+	.blog-settings-modes button {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		gap: 0.3rem;
+		min-width: 0;
+		border-color: transparent;
+		background: transparent;
+		cursor: pointer;
+	}
+
+	.blog-settings-modes button[aria-pressed='true'] {
+		border-color: var(--sl-color-hairline-shade);
+		background: var(--sl-color-bg-nav);
+		color: var(--sl-color-text-accent);
+		box-shadow: var(--sl-shadow-sm);
+	}
+
+	.blog-settings-modes button:hover,
+	.blog-settings-modes button:focus-visible {
+		color: var(--sl-color-text-accent);
 	}
 
 	.blog-settings-colors {
@@ -230,6 +285,13 @@
 		box-shadow: inset 0 0 0 1px var(--sl-color-accent);
 	}
 
+	.blog-settings-modes button:focus-visible,
+	.blog-settings-colors button:focus-visible,
+	.blog-settings-colors label:focus-within {
+		outline: 2px solid var(--sl-color-accent);
+		outline-offset: 2px;
+	}
+
 	.blog-settings-colors label {
 		display: flex;
 		align-items: center;
@@ -243,11 +305,5 @@
 		padding: 0;
 		border: 0;
 		background: transparent;
-	}
-
-	@media (max-width: 49.99rem) {
-		.blog-settings {
-			inset-inline-end: calc(var(--sl-nav-pad-x) + var(--sl-menu-button-size) + 0.35rem);
-		}
 	}
 </style>

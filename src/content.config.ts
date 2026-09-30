@@ -2,17 +2,15 @@ import { defineCollection } from 'astro:content';
 import { z } from 'astro/zod';
 import { docsLoader, i18nLoader } from '@astrojs/starlight/loaders';
 import { docsSchema, i18nSchema } from '@astrojs/starlight/schema';
-
-const categories = ['cognition', 'systems', 'science', 'frontier'] as const;
+import { normalizeTag } from './lib/tags';
+import { categoryIds, type BlogCategory } from './lib/taxonomy';
 
 const normalizedTag = z
 	.string()
 	.trim()
 	.min(1)
 	.max(64)
-	.transform((tag) =>
-		tag.normalize('NFKC').toLocaleLowerCase('en-US').replace(/\s+/gu, '-').replace(/-+/gu, '-'),
-	)
+	.transform(normalizeTag)
 	.pipe(
 		z
 			.string()
@@ -45,7 +43,7 @@ const pageFrontmatter = z.object({
 const articleFrontmatter = z.object({
 	contentType: z.literal('article'),
 	description: z.string().trim().min(1).max(200),
-	category: z.enum(categories),
+	category: z.enum(categoryIds as [BlogCategory, ...BlogCategory[]]),
 	tags: z
 		.array(normalizedTag)
 		.default([])

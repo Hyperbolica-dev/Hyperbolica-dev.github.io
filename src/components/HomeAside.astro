@@ -1,0 +1,36 @@
+---
+import { localeFromPath, ui } from '../lib/locale';
+
+const locale = localeFromPath(Astro.url.pathname);
+const labels = ui[locale];
+---
+
+<nav class="home-aside" aria-label={labels.onThisPage}>
+	<h2>{labels.onThisPage}</h2>
+	<a href="#welcome">{labels.welcome}</a>
+	<a href="#explore">{labels.explore}</a>
+	<a href="#latest-articles">{labels.latestArticles}</a>
+</nav>
+
+<style>
+	.home-aside {
+		display: grid;
+		gap: 0.35rem;
+	}
+
+	.home-aside h2 {
+		margin: 0 0 0.35rem;
+		font-size: var(--sl-text-h5);
+	}
+
+	.home-aside a {
+		color: var(--sl-color-text-accent);
+		font-size: var(--sl-text-sm);
+		text-decoration: none;
+	}
+
+	.home-aside a:hover,
+	.home-aside a:focus-visible {
+		text-decoration: underline;
+	}
+</style>

@@ -2,19 +2,24 @@
 import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
 import ArticleList from '../../components/ArticleList.astro';
 import TagList from '../../components/TagList.astro';
+const sections = [
+	{ depth: 2, slug: 'all-articles', text: 'All articles' },
+	{ depth: 2, slug: 'browse-by-tag', text: 'Browse by tag' },
+];
 ---
 
 <StarlightPage
+	headings={sections}
 	frontmatter={{
 		title: 'Tags',
 		description: 'Browse public articles by topic.',
 	}}
 >
-	## All articles
+	<h2 id={sections[0].slug}>{sections[0].text}</h2>
 
 	<ArticleList emptyMessage="No public articles yet." />
 
-	## Browse by tag
+	<h2 id={sections[1].slug}>{sections[1].text}</h2>
 
 	<TagList />
 </StarlightPage>

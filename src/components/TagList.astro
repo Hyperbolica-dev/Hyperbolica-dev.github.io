@@ -1,25 +1,31 @@
 ---
 import { getTagCollection } from '../lib/content';
+import { localeFromPath, pathForLocale } from '../lib/locale';
 
 const tags = await getTagCollection();
+const locale = localeFromPath(Astro.url.pathname);
 ---
 
-{
-	tags.length > 0 ? (
-		<ul class="tag-list">
-			{tags.map(({ tag, count }) => (
-				<li>
-					<a href={`/tags/${encodeURIComponent(tag)}/`}>
-						<span>{tag}</span>
-						<span class="tag-count">{count} {count === 1 ? 'article' : 'articles'}</span>
-					</a>
-				</li>
-			))}
-		</ul>
-	) : (
-		<p class="empty-state">No public tags yet. Tags appear after an article is published.</p>
-	)
-}
+{tags.length > 0 ? (
+	<ul class="tag-list">
+		{tags.map(({ tag, count }) => (
+			<li>
+				<a href={pathForLocale(`/tags/${encodeURIComponent(tag)}/`, locale)}>
+					<span>{tag}</span>
+					<span class="tag-count">
+						{locale === 'zh' ? `${count} 篇` : `${count} ${count === 1 ? 'article' : 'articles'}`}
+					</span>
+				</a>
+			</li>
+		))}
+	</ul>
+) : (
+	<p class="empty-state">
+		{locale === 'zh'
+			? '还没有标签。发布文章后会在这里显示。'
+			: 'No public tags yet. Tags appear after an article is published.'}
+	</p>
+)}
 
 <style>
 	.tag-list {

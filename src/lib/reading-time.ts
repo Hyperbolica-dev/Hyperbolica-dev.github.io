@@ -5,7 +5,7 @@ export interface ReadingTime {
 }
 
 const CJK_CHARACTER = /[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Hangul}]/gu;
-const WORD = /[\p{Letter}\p{Number}]+(?:['’\-][\p{Letter}\p{Number}]+)*/gu;
+const WORD = /[\p{Letter}\p{Number}]+(?:['’-][\p{Letter}\p{Number}]+)*/gu;
 
 /**
  * Estimate mixed CJK/Latin reading time without storing derived data in frontmatter.

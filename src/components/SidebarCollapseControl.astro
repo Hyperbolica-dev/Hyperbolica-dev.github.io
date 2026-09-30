@@ -1,17 +1,26 @@
+---
+import { Icon } from '@astrojs/starlight/components';
+import { localeFromPath, ui } from '../lib/locale';
+const labels = ui[localeFromPath(Astro.url.pathname)];
+---
+
 <button
 	type="button"
 	id="blog-sidebar-collapse-control"
 	class="blog-sidebar-collapse-control"
-	aria-controls="starlight__sidebar"
+	aria-controls="blog-sidebar-column"
 	aria-expanded="true"
-	aria-label="Collapse navigation"
-	title="Collapse navigation"
+	aria-label={labels.collapseNavigation}
+	title={labels.collapseNavigation}
 >
-	<span class="blog-sidebar-collapse-icon" aria-hidden="true"></span>
-	<span class="blog-sidebar-collapse-label">Collapse navigation</span>
+	<Icon name="bars" />
+	<span class="blog-sidebar-collapse-label">{labels.collapseNavigation}</span>
 </button>
 
-<script is:inline>
+<script
+	is:inline
+	define:vars={{ collapseLabel: labels.collapseNavigation, expandLabel: labels.expandNavigation }}
+>
 	(() => {
 		const storageKey = 'hyperbolica-sidebar-collapsed';
 		const desktopQuery = window.matchMedia('(min-width: 50rem)');
@@ -31,8 +40,8 @@
 			const button = document.getElementById('blog-sidebar-collapse-control');
 			if (button) {
 				button.setAttribute('aria-expanded', String(!collapsed));
-				button.setAttribute('aria-label', collapsed ? 'Expand navigation' : 'Collapse navigation');
-				button.setAttribute('title', collapsed ? 'Expand navigation' : 'Collapse navigation');
+				button.setAttribute('aria-label', collapsed ? expandLabel : collapseLabel);
+				button.setAttribute('title', collapsed ? expandLabel : collapseLabel);
 			}
 
 			if (persist) {

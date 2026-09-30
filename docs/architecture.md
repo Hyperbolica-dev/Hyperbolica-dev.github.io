@@ -1,58 +1,23 @@
 # Architecture
 
-## Phase 0 decisions
+Hyperbolica is a static Astro and Starlight blog deployed at the root GitHub Pages URL. Starlight renders public content, provides the documentation shell and translations, and builds the Pagefind search index. The repository has no database or runtime content service.
 
-Hyperbolica is a static personal blog. Astro provides the build system and Starlight provides the documentation-oriented shell: responsive navigation, article table of contents, light/dark mode, and a Pagefind search integration.
+## Ownership
 
-The repository deliberately has no database, online CMS, or runtime backend. Markdown and MDX files are the source of truth and are built into static files for GitHub Pages.
+- `src/lib/site.ts` owns the site title, URL, GitHub profile, author name, and avatar path. `astro.config.mjs` and the visible shell read these values.
+- `src/lib/taxonomy.ts` owns the stable category IDs, icons, and English and Chinese labels and descriptions. The sidebar, homepage cards, category routes, article metadata, and content schema use it.
+- `src/lib/locale.ts` owns short custom interface strings and locale URL handling. Starlight's own strings use its built-in translations and `src/content/i18n/` for supported overrides.
+- `src/content/docs/` owns homepage prose, About pages, and exported public articles. Page copy stays with the page. The article schema lives in `src/content.config.ts`.
+- `src/lib/content.ts` owns article discovery, sorting, tags, and navigation data. `src/lib/tags.ts` owns tag normalization for both schema validation and lookups.
+- `src/components/` owns the custom header, sidebar, article widgets, and controls. `src/components/overrides/` contains Starlight integration points. `src/styles/site.css` owns site tokens and cross-component layout rules.
+- `src/pages/` contains generated category and tag landing routes. Category entry pages derive their metadata from the taxonomy; public URLs remain `/category/` and `/zh/category/`.
 
-## Directory layout
+## Content contract
 
-```text
-.
-├── .github/workflows/deploy.yml   # GitHub Pages build and deployment
-├── docs/architecture.md           # Project decisions and boundaries
-├── public/                        # Static files served as-is
-├── src/
-│   ├── content/i18n/en.json    # Starlight English UI translation collection
-│   ├── content/docs/              # Markdown/MDX pages and articles
-│   │   ├── 404.md
-│   │   ├── cognition/
-│   │   ├── systems/
-│   │   ├── science/
-│   │   └── frontier/
-│   ├── styles/site.css            # Site tokens and layout hooks
-│   └── content.config.ts          # Starlight content collection
-├── astro.config.mjs               # Astro, Starlight, KaTeX, and Pagefind config
-└── package.json                   # Local development and build commands
-```
+The public blog renders and validates exports from the private writing workspace. A published article is Markdown or MDX in `src/content/docs/` with `contentType: article`, a stable slug, a taxonomy category, a description, normalized tags, and a publication date. Optional update and series fields are validated by the same schema. Reading time is derived from the article body. This repository does not generate or import private drafts.
 
-## Content and categories
+The homepage and About pages are structural content pages. English routes live at the root and Chinese routes under `/zh/`. KaTeX renders authored math at build time. The generated `dist/`, `.astro/`, and `node_modules/` directories are not committed.
 
-The four top-level categories are fixed as `cognition`, `systems`, `science`, and `frontier`. Category entry pages already exist so future articles can be added without changing the navigation model. The Phase 0 article is a pipeline placeholder, not real blog content.
+## Quality and deployment
 
-Starlight’s optional `i18n` collection is declared explicitly with an empty English override file so the default UI translations remain available without a missing-collection warning. The `404.md` document provides the GitHub Pages fallback page; Starlight’s injected 404 route is disabled to avoid a route conflict with that document.
-
-## Layout
-
-Starlight supplies the desktop shell: left navigation, central content, and a right table of contents. Its responsive breakpoint changes the page to a single-column mobile layout and exposes the navigation through the mobile menu.
-
-`src/styles/site.css` defines `--blog-sidebar-width` as the width contract for the left navigation column; its collapse and drag-resize controls update this token without changing the content model. The desktop table-of-contents column has an independent `--blog-toc-width` contract and drag-only resizer, including a zero-width collapsed state with a recoverable hit area; Starlight's built-in mobile navigation and mobile table of contents remain single-column.
-
-Supporting browsers use a short root-only cross-document View Transition; reduced-motion preferences disable it and minimize other site motion without changing interaction behavior.
-
-## Search and language
-
-Pagefind is enabled through Starlight and is generated during the production build. The content pipeline remains compatible with Chinese and English text; future content should keep titles, descriptions, and article prose in the language intended for search. Pagefind assets stay generated under `dist/` and are not committed.
-
-## Mathematics
-
-`remark-math` parses LaTeX syntax and `rehype-katex` renders it during the Astro build. `src/styles/site.css` imports KaTeX's stylesheet and is loaded through Starlight's `customCss` configuration. A future article can use inline or display math without introducing a runtime service.
-
-## Theme
-
-Starlight's built-in theme selector provides day/night mode. The initial accent colors and the future theme-color switch contract live in `src/styles/site.css`, so later color choices do not need to be spread across pages or articles.
-
-## Deployment
-
-The repository is named `Hyperbolica-dev.github.io`, so it is configured as a root GitHub Pages site with `site: https://hyperbolica-dev.github.io` and no sub-path base. The workflow runs `npm ci`, builds `dist/`, uploads the artifact, and deploys it through GitHub Pages.
+`npm run quality` runs Astro checks, lint and format validation, unused-code and dependency detection, and a production build. The build generates the Pagefind index. GitHub Actions runs the build and deploys `dist/` to GitHub Pages.

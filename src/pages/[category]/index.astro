@@ -1,0 +1,19 @@
+---
+import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
+import ArticleList from '../../components/ArticleList.astro';
+import { categoryIds, categories, type BlogCategory } from '../../lib/taxonomy';
+
+export function getStaticPaths() {
+	return categoryIds.map((category) => ({ params: { category }, props: { category } }));
+}
+
+interface Props {
+	category: BlogCategory;
+}
+const { category } = Astro.props;
+const { label, description } = categories[category].en;
+---
+
+<StarlightPage frontmatter={{ title: label, description }}>
+	<ArticleList category={category} locale="en" />
+</StarlightPage>

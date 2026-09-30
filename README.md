@@ -1,15 +1,16 @@
 # Hyperbolica
 
-Personal blog foundation built with Astro + Starlight.
+Personal blog built with Astro and Starlight.
 
 ## Commands
 
 ```sh
 npm run dev
+npm run quality
 npm run build
 npm run preview
 ```
 
-The site is designed for GitHub Pages at `https://hyperbolica-dev.github.io`. Content is authored as Markdown/MDX under `src/content/docs/`.
+The site deploys to `https://hyperbolica-dev.github.io`. The public repository renders approved Markdown and MDX exports under `src/content/docs/`.
 
-Phase 0 intentionally contains placeholders only. See [docs/architecture.md](docs/architecture.md) for the initial structure and decisions.
+See [architecture](docs/architecture.md) and [publishing](docs/publishing.md).

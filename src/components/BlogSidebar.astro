@@ -1,0 +1,264 @@
+---
+import { Icon } from '@astrojs/starlight/components';
+import { localeFromPath, pathForLocale, ui } from '../lib/locale';
+import { site } from '../lib/site';
+import { categoryIds, categories } from '../lib/taxonomy';
+
+const currentPath = Astro.url.pathname;
+const locale = localeFromPath(currentPath);
+const labels = ui[locale];
+const link = (path: string) => pathForLocale(path, locale);
+
+const items = [
+	...categoryIds.map((id) => ({
+		label: categories[id][locale].label,
+		href: link(`/${id}/`),
+		icon: categories[id].icon,
+	})),
+	{ label: labels.allArticles, href: link('/tags/'), icon: 'document' as const },
+];
+
+const isActive = (href: string) => currentPath === href || currentPath.startsWith(href);
+---
+
+<div class="blog-sidebar-inner">
+	<nav class="blog-sidebar-nav" aria-label={labels.navigation}>
+		<ul>
+			{items.map((item) => (
+				<li>
+					<a
+						class:list={['blog-nav-link', { 'is-active': isActive(item.href) }]}
+						href={item.href}
+						aria-current={isActive(item.href) ? 'page' : undefined}
+						title={item.label}
+						aria-label={item.label}
+					>
+						<span class="blog-nav-icon">
+							<Icon name={item.icon} />
+						</span>
+						<span class="blog-sidebar-label">{item.label}</span>
+					</a>
+				</li>
+			))}
+		</ul>
+	</nav>
+	<div class="blog-sidebar-identity">
+		<a
+			class="blog-profile-avatar-link"
+			href={link('/about/')}
+			title={`About ${site.author}`}
+			aria-label={`About ${site.author}`}
+		>
+			<img
+				class="tanh-avatar"
+				src={site.avatar}
+				alt={`${site.author} avatar`}
+				width="48"
+				height="48"
+				loading="lazy"
+			/>
+		</a>
+		<div class="blog-language-switch" role="group" aria-label="Language / 语言">
+			<a
+				href={pathForLocale(currentPath, 'en')}
+				hreflang="en"
+				lang="en"
+				aria-current={locale === 'en' ? 'true' : undefined}
+				aria-label="English"
+			>
+				en
+			</a>
+			<span aria-hidden="true">/</span>
+			<a
+				href={pathForLocale(currentPath, 'zh')}
+				hreflang="zh-CN"
+				lang="zh-CN"
+				aria-current={locale === 'zh' ? 'true' : undefined}
+				aria-label="简体中文"
+			>
+				zh
+			</a>
+		</div>
+		<a
+			class="blog-identity-name"
+			href={link('/about/')}
+			title={`About ${site.author}`}
+			aria-label={`About ${site.author}`}
+		>
+			<span class="blog-sidebar-label">{site.author}</span>
+		</a>
+		<a
+			class="blog-identity-github"
+			href={site.github}
+			rel="me"
+			title={labels.github}
+			aria-label={labels.github}
+		>
+			<span class="blog-identity-github-icon">
+				<Icon name="github" />
+			</span>
+			<span class="blog-sidebar-label">{labels.github}</span>
+		</a>
+	</div>
+</div>
+
+<style>
+	.blog-sidebar-inner {
+		display: flex;
+		flex-direction: column;
+		min-height: 100%;
+		padding: 1rem 0.75rem 0.75rem;
+	}
+
+	.blog-sidebar-nav {
+		display: grid;
+		gap: 0.8rem;
+	}
+
+	.blog-sidebar-nav ul {
+		display: grid;
+		gap: 0.2rem;
+		list-style: none;
+		margin: 0;
+		padding: 0;
+	}
+
+	.blog-nav-link,
+	.blog-identity-name,
+	.blog-identity-github {
+		display: flex;
+		align-items: center;
+		gap: 0.7rem;
+		min-width: 0;
+		border-radius: 0.45rem;
+		color: var(--sl-color-text);
+		text-decoration: none;
+	}
+
+	.blog-nav-link {
+		min-height: 2.35rem;
+		padding: 0.45rem 0.65rem;
+	}
+
+	.blog-nav-link:hover,
+	.blog-nav-link:focus-visible,
+	.blog-identity-name:hover,
+	.blog-identity-name:focus-visible,
+	.blog-identity-github:hover,
+	.blog-identity-github:focus-visible,
+	.blog-language-switch a:hover,
+	.blog-language-switch a:focus-visible {
+		background: var(--sl-color-gray-6);
+		color: var(--sl-color-text-accent);
+	}
+
+	.blog-nav-link:focus-visible,
+	.blog-language-switch a:focus-visible,
+	.blog-identity-name:focus-visible,
+	.blog-identity-github:focus-visible {
+		outline: 2px solid var(--sl-color-accent);
+		outline-offset: 2px;
+	}
+
+	.blog-nav-link.is-active {
+		background: var(--sl-color-accent-low);
+		color: var(--sl-color-text-accent);
+	}
+
+	.blog-nav-icon {
+		display: grid;
+		place-items: center;
+		width: 1.2rem;
+		flex: 0 0 1.2rem;
+		font-size: 1.05rem;
+		line-height: 1;
+	}
+
+	.blog-sidebar-label {
+		min-width: 0;
+		max-width: 12rem;
+		overflow: hidden;
+		opacity: 1;
+		transform: translateX(0);
+		transition:
+			max-width 140ms ease,
+			opacity 100ms ease,
+			transform 140ms ease;
+		white-space: nowrap;
+	}
+
+	.blog-sidebar-identity {
+		display: grid;
+		gap: 0.2rem;
+		margin-top: auto;
+		border-top: 1px solid var(--sl-color-hairline-shade);
+		padding: 0.75rem 0.15rem 0;
+	}
+
+	.blog-profile-avatar-link {
+		display: block;
+		width: 3rem;
+		height: 3rem;
+		border-radius: 50%;
+	}
+
+	.blog-profile-avatar-link:focus-visible {
+		outline: 2px solid var(--sl-color-accent);
+		outline-offset: 2px;
+	}
+
+	.blog-profile-avatar-link .tanh-avatar {
+		display: block;
+		width: 100%;
+		height: 100%;
+		object-fit: contain;
+	}
+
+	.blog-identity-name,
+	.blog-identity-github {
+		min-height: 1.8rem;
+		padding-inline: 0.5rem;
+		font-size: var(--sl-text-xs);
+	}
+
+	.blog-identity-name,
+	.blog-identity-github {
+		font-size: var(--sl-text-sm);
+	}
+
+	.blog-identity-github-icon {
+		display: inline-grid;
+		place-items: center;
+		width: 1.2rem;
+		flex: 0 0 1.2rem;
+	}
+
+	.blog-language-switch {
+		display: flex;
+		align-items: center;
+		gap: 0.15rem;
+		padding-inline: 0.4rem;
+		font-size: var(--sl-text-xs);
+	}
+
+	.blog-language-switch a {
+		border-radius: 0.25rem;
+		padding: 0.1rem 0.2rem;
+		color: var(--sl-color-text-accent);
+		text-decoration: underline;
+	}
+
+	.blog-language-switch a[aria-current='true'] {
+		color: var(--sl-color-text);
+		font-weight: 700;
+		text-decoration: none;
+		pointer-events: none;
+	}
+
+	@media (max-width: 49.99rem) {
+		.blog-sidebar-inner {
+			min-height: calc(100vh - var(--blog-header-height));
+			padding: 1rem;
+		}
+	}
+</style>
