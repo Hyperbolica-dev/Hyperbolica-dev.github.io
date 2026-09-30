@@ -90,6 +90,16 @@
 	--sl-color-accent-high: var(--blog-accent-light-high);
 }
 
+:root[data-blog-accent='custom'] {
+	--sl-color-accent: var(--blog-custom-accent, var(--blog-accent-dark));
+	--sl-color-text-accent: var(--blog-custom-accent, var(--blog-accent-dark));
+}
+
+:root[data-theme='light'][data-blog-accent='custom'] {
+	--sl-color-accent: var(--blog-custom-accent, var(--blog-accent-light));
+	--sl-color-text-accent: var(--blog-custom-accent, var(--blog-accent-light));
+}
+
 /* The collapsed desktop rail keeps the control reachable while preserving the right TOC width. */
 @media (min-width: 50rem) {
 	html[data-has-sidebar][data-blog-sidebar-collapsed] {
@@ -104,7 +114,7 @@
 		padding-inline: 0.5rem;
 	}
 
-	html[data-blog-sidebar-collapsed] .sidebar-content > :not(.blog-sidebar-collapse-control) {
+	html[data-blog-sidebar-collapsed] .sidebar-content > :not(.blog-sidebar-collapse-control):not(.blog-sidebar-rail) {
 		visibility: hidden;
 		pointer-events: none;
 	}
@@ -158,7 +168,7 @@
 }
 
 .blog-sidebar-collapse-icon::before {
-	content: '«';
+	content: '›';
 	position: absolute;
 	inset: 0;
 	font-size: 1.25rem;
@@ -172,7 +182,7 @@ html[data-blog-sidebar-collapsed] .blog-sidebar-collapse-control {
 }
 
 html[data-blog-sidebar-collapsed] .blog-sidebar-collapse-icon::before {
-	content: '»';
+	content: '☰';
 }
 
 html[data-blog-sidebar-collapsed] .blog-sidebar-collapse-label {

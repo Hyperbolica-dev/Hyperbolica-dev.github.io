@@ -1,0 +1,253 @@
+<div class="blog-settings" data-blog-settings>
+	<button
+		type="button"
+		class="blog-settings-button"
+		aria-label="Open settings"
+		aria-expanded="false"
+		aria-controls="blog-settings-panel"
+		title="Settings"
+	>
+		<span aria-hidden="true">⚙</span>
+	</button>
+	<div id="blog-settings-panel" class="blog-settings-panel" hidden>
+		<section aria-labelledby="blog-settings-theme-label">
+			<h2 id="blog-settings-theme-label">Theme</h2>
+			<select data-blog-theme-select aria-label="Theme">
+				<option value="light">Light</option>
+				<option value="dark">Dark</option>
+				<option value="auto">Auto</option>
+			</select>
+		</section>
+		<section aria-labelledby="blog-settings-color-label">
+			<h2 id="blog-settings-color-label">Theme color</h2>
+			<div class="blog-settings-colors" role="group" aria-labelledby="blog-settings-color-label">
+				<button type="button" data-blog-accent-choice="cyan">Cyan</button>
+				<button type="button" data-blog-accent-choice="violet">Violet</button>
+				<button type="button" data-blog-accent-choice="amber">Amber</button>
+				<label>
+					<span>Custom</span>
+					<input type="color" value="#38bdf8" data-blog-custom-color aria-label="Custom theme color" />
+				</label>
+			</div>
+		</section>
+	</div>
+</div>
+
+<script is:inline>
+	(() => {
+		const root = document.documentElement;
+		const settings = document.querySelector('[data-blog-settings]');
+		if (!(settings instanceof HTMLElement)) return;
+
+		const button = settings.querySelector('.blog-settings-button');
+		const panel = settings.querySelector('#blog-settings-panel');
+		const themeSelect = settings.querySelector('[data-blog-theme-select]');
+		const customColor = settings.querySelector('[data-blog-custom-color]');
+		const accentOptions = [...settings.querySelectorAll('[data-blog-accent-choice]')];
+		const themeStorageKey = 'starlight-theme';
+		const accentStorageKey = 'hyperbolica-theme-color';
+		const customColorStorageKey = 'hyperbolica-custom-color';
+		const allowedAccents = new Set(['cyan', 'violet', 'amber', 'custom']);
+
+		const getStored = (key, fallback) => {
+			try {
+				return window.localStorage.getItem(key) || fallback;
+			} catch {
+				return fallback;
+			}
+		};
+
+		const setStored = (key, value) => {
+			try {
+				window.localStorage.setItem(key, value);
+			} catch {
+				// Preferences still apply for the current page when storage is blocked.
+			}
+		};
+
+		const applyTheme = (theme, persist = true) => {
+			const nextTheme = ['light', 'dark', 'auto'].includes(theme) ? theme : 'auto';
+			const resolvedTheme =
+				nextTheme === 'auto'
+					? window.matchMedia('(prefers-color-scheme: light)').matches
+						? 'light'
+						: 'dark'
+					: nextTheme;
+			root.dataset.theme = resolvedTheme;
+			if (themeSelect) themeSelect.value = nextTheme;
+			window.StarlightThemeProvider?.updatePickers(nextTheme);
+			if (persist) setStored(themeStorageKey, nextTheme === 'auto' ? '' : nextTheme);
+		};
+
+		const applyAccent = (accent, persist = true) => {
+			if (!allowedAccents.has(accent)) return;
+			root.dataset.blogAccent = accent;
+			root.toggleAttribute('data-blog-accent-custom', accent === 'custom');
+			accentOptions.forEach((option) => {
+				option.setAttribute('aria-pressed', String(option.dataset.blogAccentChoice === accent));
+			});
+			if (accent === 'custom') {
+				const color = getStored(customColorStorageKey, '#38bdf8');
+				root.style.setProperty('--blog-custom-accent', color);
+				if (customColor instanceof HTMLInputElement) customColor.value = color;
+			}
+			if (persist) setStored(accentStorageKey, accent);
+		};
+
+		const openPanel = (open) => {
+			if (!(button instanceof HTMLButtonElement) || !(panel instanceof HTMLElement)) return;
+			panel.hidden = !open;
+			button.setAttribute('aria-expanded', String(open));
+		};
+
+		applyTheme(getStored(themeStorageKey, 'auto'), false);
+		const storedAccent = getStored(accentStorageKey, 'cyan');
+		applyAccent(allowedAccents.has(storedAccent) ? storedAccent : 'cyan', false);
+
+		button?.addEventListener('click', () => openPanel(panel?.hidden ?? true));
+		themeSelect?.addEventListener('change', (event) => {
+			if (event.currentTarget instanceof HTMLSelectElement) applyTheme(event.currentTarget.value);
+		});
+		accentOptions.forEach((option) => {
+			option.addEventListener('click', () => applyAccent(option.dataset.blogAccentChoice));
+		});
+		customColor?.addEventListener('input', (event) => {
+			if (!(event.currentTarget instanceof HTMLInputElement)) return;
+			setStored(customColorStorageKey, event.currentTarget.value);
+			root.style.setProperty('--blog-custom-accent', event.currentTarget.value);
+			applyAccent('custom');
+		});
+		document.addEventListener('click', (event) => {
+			if (event.target instanceof Node && !settings.contains(event.target)) openPanel(false);
+		});
+		window.matchMedia('(prefers-color-scheme: light)').addEventListener('change', () => {
+			if (!getStored(themeStorageKey, 'auto')) applyTheme('auto', false);
+		});
+	})();
+</script>
+
+<style>
+	.blog-settings {
+		position: absolute;
+		inset-inline-end: var(--sl-nav-pad-x);
+		inset-block-start: 50%;
+		z-index: calc(var(--sl-z-index-menu) + 1);
+		transform: translateY(-50%);
+	}
+
+	.blog-settings-button {
+		display: grid;
+		place-items: center;
+		width: 2.25rem;
+		height: 2.25rem;
+		border: 1px solid transparent;
+		border-radius: 0.45rem;
+		background: transparent;
+		color: var(--sl-color-text);
+		font-size: 1.15rem;
+		cursor: pointer;
+	}
+
+	.blog-settings-button:hover,
+	.blog-settings-button:focus-visible,
+	.blog-settings-button[aria-expanded='true'] {
+		border-color: var(--sl-color-accent);
+		color: var(--sl-color-text-accent);
+	}
+
+	.blog-settings-button:focus-visible {
+		outline: 2px solid var(--sl-color-accent);
+		outline-offset: 2px;
+	}
+
+	.blog-settings-panel {
+		position: absolute;
+		inset-inline-end: 0;
+		inset-block-start: calc(100% + 0.5rem);
+		display: grid;
+		gap: 1rem;
+		width: min(17rem, calc(100vw - 2rem));
+		border: 1px solid var(--sl-color-hairline-shade);
+		border-radius: 0.65rem;
+		padding: 1rem;
+		background: var(--sl-color-bg-nav);
+		box-shadow: var(--sl-shadow-md);
+	}
+
+	.blog-settings-panel[hidden] {
+		display: none;
+	}
+
+	.blog-settings-panel section {
+		display: grid;
+		gap: 0.45rem;
+	}
+
+	.blog-settings-panel h2 {
+		margin: 0;
+		color: var(--sl-color-gray-2);
+		font-size: var(--sl-text-xs);
+		font-weight: 600;
+	}
+
+	.blog-settings-panel select,
+	.blog-settings-colors button,
+	.blog-settings-colors label {
+		border: 1px solid var(--sl-color-hairline-shade);
+		border-radius: 0.4rem;
+		padding: 0.4rem 0.5rem;
+		background: var(--sl-color-bg-sidebar);
+		color: var(--sl-color-text);
+		font: inherit;
+		font-size: var(--sl-text-xs);
+	}
+
+	.blog-settings-panel select {
+		width: 100%;
+	}
+
+	.blog-settings-colors {
+		display: grid;
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+		gap: 0.4rem;
+	}
+
+	.blog-settings-colors button,
+	.blog-settings-colors label {
+		cursor: pointer;
+		text-align: center;
+	}
+
+	.blog-settings-colors button:hover,
+	.blog-settings-colors button:focus-visible,
+	.blog-settings-colors label:hover,
+	.blog-settings-colors label:focus-within {
+		border-color: var(--sl-color-accent);
+	}
+
+	.blog-settings-colors button[aria-pressed='true'] {
+		border-color: var(--sl-color-accent);
+		box-shadow: inset 0 0 0 1px var(--sl-color-accent);
+	}
+
+	.blog-settings-colors label {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		gap: 0.4rem;
+	}
+
+	.blog-settings-colors input {
+		width: 1.25rem;
+		height: 1.25rem;
+		padding: 0;
+		border: 0;
+		background: transparent;
+	}
+
+	@media (max-width: 49.99rem) {
+		.blog-settings {
+			inset-inline-end: calc(var(--sl-nav-pad-x) + var(--sl-menu-button-size) + 0.35rem);
+		}
+	}
+</style>

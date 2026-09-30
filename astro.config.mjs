@@ -15,7 +15,7 @@ export default defineConfig({
 	},
 	integrations: [
 		starlight({
-			title: 'Hyperbolica',
+			title: 'Hyperbolica Space',
 			description: 'A personal blog for notes across cognition, systems, science, and frontier.',
 			components: {
 				PageFrame: './src/components/overrides/PageFrame.astro',
@@ -41,16 +41,11 @@ export default defineConfig({
 			pagination: false,
 			credits: false,
 			sidebar: [
-				{
-					label: 'Navigate',
-					items: [
-						{ label: 'Cognition', slug: 'cognition' },
-						{ label: 'Systems', slug: 'systems' },
-						{ label: 'Science', slug: 'science' },
-						{ label: 'Frontier', slug: 'frontier' },
-						{ label: 'Tags', link: '/tags/' },
-					],
-				},
+				{ label: 'Cognition', slug: 'cognition' },
+				{ label: 'Systems', slug: 'systems' },
+				{ label: 'Science', slug: 'science' },
+				{ label: 'Frontier', slug: 'frontier' },
+				{ label: 'All articles', link: '/tags/' },
 			],
 		}),
 	],
