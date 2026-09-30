@@ -3,11 +3,7 @@ import avatar from '../assets/tanh_avatar.png';
 ---
 
 <a class="blog-profile-link" href="/about/" aria-label="About Hyperbolica-dev — GitHub profile">
-	<span
-		class="blog-profile-avatar"
-		aria-hidden="true"
-		style={`--blog-profile-avatar-image: url(${avatar.src})`}
-	></span>
+	<img class="blog-profile-avatar" src={avatar.src} alt="" width="48" height="48" loading="lazy" />
 	<span class="blog-profile-copy">
 		<strong>Hyperbolica-dev</strong>
 		<span>GitHub profile</span>
@@ -41,17 +37,12 @@ import avatar from '../assets/tanh_avatar.png';
 		height: 2.25rem;
 		flex: 0 0 2.25rem;
 		border-radius: 50%;
-		background: #000;
-		-webkit-mask: var(--blog-profile-avatar-image) center / contain no-repeat;
-		mask: var(--blog-profile-avatar-image) center / contain no-repeat;
+		display: block;
+		object-fit: contain;
 	}
 
 	:global(html[data-theme='dark']) .blog-profile-avatar {
-		background: #fff;
-	}
-
-	:global(html[data-blog-accent-custom]) .blog-profile-avatar {
-		background: var(--sl-color-accent);
+		filter: invert(1);
 	}
 
 	.blog-profile-copy {
