@@ -1,6 +1,6 @@
 # Architecture
 
-Hyperbolica is a static Astro and Starlight blog deployed at the root GitHub Pages URL. Starlight renders public content, provides the documentation shell and translations, and builds the Pagefind search index. The repository has no database or runtime content service.
+Hyperbolica is a static Astro and Starlight blog deployed at the root GitHub Pages URL. Starlight renders public articles, supplies its own translations, and builds the Pagefind index; custom components own the visible navigation shell, theme controls, inline search, and right rail. The repository has no database or runtime content service.
 
 ## Ownership
 

@@ -46,6 +46,11 @@ const dateFormatter = new Intl.DateTimeFormat(locale === 'zh' ? 'zh-CN' : 'en', 
 	dateStyle: 'medium',
 	timeZone: 'UTC',
 });
+
+function originalLanguageLabel(article: BlogArticle): string | undefined {
+	const source = localeFromPath(`/${article.id}/`);
+	return source === locale ? undefined : labels.originalLanguage(source);
+}
 ---
 
 {visibleArticles.length > 0 ? (
@@ -65,11 +70,11 @@ const dateFormatter = new Intl.DateTimeFormat(locale === 'zh' ? 'zh-CN' : 'en', 
 							<span>
 								{getArticleReadingTime(article).minutes} {labels.readTime}
 							</span>
-							{locale === 'zh' && <span>{labels.originalLanguage}</span>}
+							{originalLanguageLabel(article) && <span>{originalLanguageLabel(article)}</span>}
 						</div>
 						<p>{article.data.description}</p>
 						{article.data.tags.length > 0 && (
-							<ul class="article-tags" aria-label={`Tags for ${article.data.title}`}>
+							<ul class="article-tags" aria-label={labels.articleTags(article.data.title)}>
 								{article.data.tags.map((articleTag) => (
 									<li>
 										<a href={pathForLocale(`/tags/${encodeURIComponent(articleTag)}/`, locale)}>

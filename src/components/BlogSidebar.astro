@@ -1,4 +1,5 @@
 ---
+import { getCollection } from 'astro:content';
 import { Icon } from '@astrojs/starlight/components';
 import { localeFromPath, pathForLocale, ui } from '../lib/locale';
 import { site } from '../lib/site';
@@ -19,6 +20,19 @@ const items = [
 ];
 
 const isActive = (href: string) => currentPath === href || currentPath.startsWith(href);
+const currentEntry = Astro.locals.starlightRoute.entry;
+let englishPath = pathForLocale(currentPath, 'en');
+
+if (
+	locale === 'zh' &&
+	currentEntry?.data.contentType === 'article' &&
+	currentEntry.id.startsWith('zh/')
+) {
+	const translation = (await getCollection('docs', ({ id }) => id === currentEntry.id.slice(3)))[0];
+	if (!translation || translation.data.draft) {
+		englishPath = `/${currentEntry.data.category}/`;
+	}
+}
 ---
 
 <div class="blog-sidebar-inner">
@@ -46,13 +60,13 @@ const isActive = (href: string) => currentPath === href || currentPath.startsWit
 		<a
 			class="blog-profile-avatar-link"
 			href={link('/about/')}
-			title={`About ${site.author}`}
-			aria-label={`About ${site.author}`}
+			title={labels.aboutAuthor(site.author)}
+			aria-label={labels.aboutAuthor(site.author)}
 		>
 			<img
 				class="tanh-avatar"
 				src={site.avatar}
-				alt={`${site.author} avatar`}
+				alt={labels.avatarAlt(site.author)}
 				width="48"
 				height="48"
 				loading="lazy"
@@ -60,7 +74,7 @@ const isActive = (href: string) => currentPath === href || currentPath.startsWit
 		</a>
 		<div class="blog-language-switch" role="group" aria-label="Language / 语言">
 			<a
-				href={pathForLocale(currentPath, 'en')}
+				href={englishPath}
 				hreflang="en"
 				lang="en"
 				aria-current={locale === 'en' ? 'true' : undefined}
@@ -82,8 +96,8 @@ const isActive = (href: string) => currentPath === href || currentPath.startsWit
 		<a
 			class="blog-identity-name"
 			href={link('/about/')}
-			title={`About ${site.author}`}
-			aria-label={`About ${site.author}`}
+			title={labels.aboutAuthor(site.author)}
+			aria-label={labels.aboutAuthor(site.author)}
 		>
 			<span class="blog-sidebar-label">{site.author}</span>
 		</a>
