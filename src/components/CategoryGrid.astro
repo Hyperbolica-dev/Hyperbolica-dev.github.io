@@ -1,15 +1,11 @@
 ---
-import { localeFromPath, pathForLocale } from '../lib/locale';
+import { localeFromPath, pathForLocale, ui } from '../lib/locale';
 import { categoryIds, categories } from '../lib/taxonomy';
 
 const locale = localeFromPath(Astro.url.pathname);
 ---
 
-<div
-	id="explore"
-	class="home-category-grid"
-	aria-label={locale === 'zh' ? '探索分类' : 'Explore categories'}
->
+<div id="explore" class="home-category-grid" aria-label={ui[locale].exploreCategories}>
 	{categoryIds.map((id) => (
 		<a href={pathForLocale(`/${id}/`, locale)}>
 			<strong>{categories[id][locale].label}</strong>

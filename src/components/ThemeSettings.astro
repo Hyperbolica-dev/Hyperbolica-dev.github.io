@@ -37,13 +37,13 @@ const labels = ui[localeFromPath(Astro.url.pathname)];
 			<h2 id="blog-settings-color-label">{labels.themeColor}</h2>
 			<div class="blog-settings-colors" role="group" aria-labelledby="blog-settings-color-label">
 				<button type="button" data-blog-accent-choice="cyan">
-					Cyan
+					{labels.cyan}
 				</button>
 				<button type="button" data-blog-accent-choice="violet">
-					Violet
+					{labels.violet}
 				</button>
 				<button type="button" data-blog-accent-choice="amber">
-					Amber
+					{labels.amber}
 				</button>
 				<label>
 					<span>{labels.custom}</span>
