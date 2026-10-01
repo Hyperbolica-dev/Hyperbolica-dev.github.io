@@ -1,6 +1,6 @@
 ---
-import { getCollection } from 'astro:content';
 import { Icon } from '@astrojs/starlight/components';
+import { getArticleLocalePaths } from '../lib/content';
 import { localeFromPath, pathForLocale, ui } from '../lib/locale';
 import { site } from '../lib/site';
 import { categoryIds, categories } from '../lib/taxonomy';
@@ -21,18 +21,13 @@ const items = [
 
 const isActive = (href: string) => currentPath === href || currentPath.startsWith(href);
 const currentEntry = Astro.locals.starlightRoute.entry;
-let englishPath = pathForLocale(currentPath, 'en');
-
-if (
-	locale === 'zh' &&
-	currentEntry?.data.contentType === 'article' &&
-	currentEntry.id.startsWith('zh/')
-) {
-	const translation = (await getCollection('docs', ({ id }) => id === currentEntry.id.slice(3)))[0];
-	if (!translation || translation.data.draft) {
-		englishPath = `/${currentEntry.data.category}/`;
-	}
-}
+const articlePaths =
+	currentEntry?.data.contentType === 'article'
+		? await getArticleLocalePaths(currentEntry.id)
+		: undefined;
+const currentLanguage = articlePaths?.source ?? locale;
+const englishPath = articlePaths?.en ?? pathForLocale(currentPath, 'en');
+const chinesePath = articlePaths?.zh ?? pathForLocale(currentPath, 'zh');
 ---
 
 <div class="blog-sidebar-inner">
@@ -77,17 +72,17 @@ if (
 				href={englishPath}
 				hreflang="en"
 				lang="en"
-				aria-current={locale === 'en' ? 'true' : undefined}
+				aria-current={currentLanguage === 'en' ? 'true' : undefined}
 				aria-label="English"
 			>
 				en
 			</a>
 			<span aria-hidden="true">/</span>
 			<a
-				href={pathForLocale(currentPath, 'zh')}
+				href={chinesePath}
 				hreflang="zh-CN"
 				lang="zh-CN"
-				aria-current={locale === 'zh' ? 'true' : undefined}
+				aria-current={currentLanguage === 'zh' ? 'true' : undefined}
 				aria-label="简体中文"
 			>
 				zh

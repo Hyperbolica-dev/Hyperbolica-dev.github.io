@@ -1,6 +1,7 @@
 import { getCollection, type CollectionEntry } from 'astro:content';
 
 import { estimateReadingTime, type ReadingTime } from './reading-time';
+import { localeFromPath, type BlogLocale } from './locale';
 import { normalizeTag } from './tags';
 import type { BlogCategory } from './taxonomy';
 
@@ -52,6 +53,42 @@ function sortArticlesByPublishedAt(articles: readonly BlogArticle[]): BlogArticl
 export async function getPublicArticles(): Promise<BlogArticle[]> {
 	const entries = await getCollection('docs');
 	return sortArticlesByPublishedAt(entries.filter(isPublicArticle));
+}
+
+export async function getArticleLocalePaths(
+	id: string,
+): Promise<{ source: BlogLocale; en: string; zh: string } | undefined> {
+	const articles = await getPublicArticles();
+	const article = articles.find((candidate) => candidate.id === id);
+	if (!article) return undefined;
+
+	const source = localeFromPath(`/${article.id}/`);
+	const paths = {
+		source,
+		en: `/${article.data.category}/`,
+		zh: `/zh/${article.data.category}/`,
+	};
+	paths[source] = `/${article.id}/`;
+
+	if (article.data.translationKey) {
+		const pairedArticles = articles.filter(
+			(candidate) => candidate.data.translationKey === article.data.translationKey,
+		);
+		if (pairedArticles.some((candidate) => candidate.data.category !== article.data.category)) {
+			throw new Error(`Translation category mismatch: ${article.data.translationKey}`);
+		}
+		for (const locale of ['en', 'zh'] as const) {
+			const matches = pairedArticles.filter(
+				(candidate) => localeFromPath(`/${candidate.id}/`) === locale,
+			);
+			if (matches.length > 1) {
+				throw new Error(`Duplicate ${locale} translationKey: ${article.data.translationKey}`);
+			}
+			if (matches[0]) paths[locale] = `/${matches[0].id}/`;
+		}
+	}
+
+	return paths;
 }
 
 export async function getArticlesByCategory(category: BlogCategory): Promise<BlogArticle[]> {

@@ -16,7 +16,7 @@ Hyperbolica is a static Astro and Starlight blog deployed at the root GitHub Pag
 
 The public blog renders and validates exports from the private writing workspace. A published article is Markdown or MDX in `src/content/docs/` with `contentType: article`, a stable slug, a taxonomy category, a description, normalized tags, and a publication date. Optional update and series fields are validated by the same schema. Reading time is derived from the article body. This repository does not generate or import private drafts.
 
-The homepage and About pages are structural content pages. English routes live at the root and Chinese routes under `/zh/`. KaTeX renders authored math at build time. The generated `dist/`, `.astro/`, and `node_modules/` directories are not committed.
+The homepage and About pages are structural content pages. English routes live at the root and Chinese routes under `/zh/`. Optional shared `translationKey` values connect published translations even when their slugs differ; absent counterparts fall back to the matching category rather than an invented article URL. KaTeX renders authored math at build time. The generated `dist/`, `.astro/`, and `node_modules/` directories are not committed.
 
 ## Quality and deployment
 
