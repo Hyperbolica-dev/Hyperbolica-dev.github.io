@@ -38,6 +38,7 @@ const pageFrontmatter = z.object({
 	publishedAt: z.never().optional(),
 	updatedAt: z.never().optional(),
 	series: z.never().optional(),
+	translationKey: z.never().optional(),
 });
 
 const articleFrontmatter = z.object({
@@ -51,6 +52,10 @@ const articleFrontmatter = z.object({
 	publishedAt: z.coerce.date(),
 	updatedAt: z.coerce.date().optional(),
 	series: seriesSchema.optional(),
+	translationKey: z
+		.string()
+		.regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, 'Translation keys must use lowercase kebab-case.')
+		.optional(),
 });
 
 export const collections = {
