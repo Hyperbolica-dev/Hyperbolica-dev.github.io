@@ -1,0 +1,172 @@
+---
+import { site } from '../../lib/site';
+---
+
+<!doctype html>
+<html lang="zh-CN">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<title>私人 MRDM · {site.title}</title>
+		<meta name="description" content="个人睡眠节律工具的私人访问入口。" />
+	</head>
+	<body>
+		<header>
+			<a href="/zh/">← 返回博客</a>
+			<h1>私人 MRDM</h1>
+		</header>
+		<main>
+			<p>在已登录本人 Tailscale 账号的设备上使用。本机服务需要保持运行。</p>
+			<form id="connect-form">
+				<label for="service-url">私人服务地址（只保存在当前浏览器）</label>
+				<div class="controls">
+					<input
+						id="service-url"
+						type="url"
+						required
+						placeholder="https://你的设备.ts.net:8443"
+						autocomplete="off"
+					/>
+					<button type="submit">打开应用</button>
+					<button type="button" id="forget">
+						清除本机地址
+					</button>
+				</div>
+			</form>
+			<p id="status" role="status">
+				首次填写一次地址。睡眠和药物记录保留在你的服务电脑，博客不接收这些数据。
+			</p>
+			<a id="open-window" hidden target="_blank" rel="noopener noreferrer">
+				无法嵌入时，在新窗口打开
+			</a>
+			<iframe
+				id="app"
+				title="私人 MRDM 睡眠与节律记录"
+				hidden
+				referrerpolicy="no-referrer"
+				allow="clipboard-write"
+			></iframe>
+		</main>
+		<script>
+			const field = document.querySelector<HTMLInputElement>('#service-url');
+			const form = document.querySelector<HTMLFormElement>('#connect-form');
+			const frame = document.querySelector<HTMLIFrameElement>('#app');
+			const status = document.querySelector<HTMLElement>('#status');
+			const separate = document.querySelector<HTMLAnchorElement>('#open-window');
+			const storageKey = 'mrdm-private-service';
+			try {
+				if (field) field.value = localStorage.getItem(storageKey) ?? '';
+			} catch {
+				console.info('MRDM address storage unavailable');
+			}
+			form?.addEventListener('submit', (event) => {
+				event.preventDefault();
+				if (!field || !frame || !status || !separate) return;
+				try {
+					const url = new URL(field.value.trim());
+					if (
+						url.protocol !== 'https:' ||
+						!url.hostname.endsWith('.ts.net') ||
+						url.username ||
+						url.password
+					)
+						throw new Error('请输入 HTTPS 的 Tailscale 私人地址，不包含账号密码。');
+					url.pathname = '/';
+					url.search = '';
+					url.hash = '';
+					try {
+						localStorage.setItem(storageKey, url.origin);
+					} catch {
+						console.info('MRDM address storage unavailable');
+					}
+					separate.href = url.href;
+					separate.hidden = false;
+					url.searchParams.set('embed', 'true');
+					frame.src = url.href;
+					frame.hidden = false;
+					status.textContent =
+						'正在连接私人服务；若页面未显示，请检查 Tailscale 登录和电脑是否在线。';
+				} catch (error) {
+					status.textContent = error instanceof Error ? error.message : '地址格式不正确。';
+				}
+			});
+			document.querySelector('#forget')?.addEventListener('click', () => {
+				try {
+					localStorage.removeItem(storageKey);
+				} catch {
+					console.info('MRDM address storage unavailable');
+				}
+				if (field) field.value = '';
+				if (frame) {
+					frame.removeAttribute('src');
+					frame.hidden = true;
+				}
+				if (separate) separate.hidden = true;
+				if (status) status.textContent = '已清除当前浏览器的地址，没有删除睡眠记录。';
+			});
+		</script>
+	</body>
+</html>
+<style>
+	:global(body) {
+		margin: 0;
+		font-family: system-ui, sans-serif;
+		color: #172033;
+		background: #f6f8fc;
+	}
+	header,
+	main {
+		max-width: 1100px;
+		margin: auto;
+		padding: 1rem;
+	}
+	header {
+		display: flex;
+		gap: 1.5rem;
+		align-items: center;
+	}
+	h1 {
+		font-size: 1.3rem;
+	}
+	a {
+		color: #215ac1;
+	}
+	label {
+		display: block;
+		margin-bottom: 0.5rem;
+	}
+	.controls {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.5rem;
+	}
+	input {
+		flex: 1;
+		min-width: 12rem;
+	}
+	input,
+	button {
+		padding: 0.7rem;
+		border: 1px solid #b2bed0;
+		border-radius: 0.5rem;
+		font: inherit;
+	}
+	button {
+		cursor: pointer;
+		background: white;
+	}
+	button[type='submit'] {
+		color: white;
+		background: #215ac1;
+	}
+	iframe {
+		width: 100%;
+		height: 85vh;
+		border: 0;
+		border-radius: 0.7rem;
+		background: white;
+	}
+	[hidden] {
+		display: none;
+	}
+</style>
