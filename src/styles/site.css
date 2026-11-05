@@ -282,26 +282,6 @@ body {
 	max-width: 48rem;
 }
 
-.sl-markdown-content .about-verse {
-	display: grid;
-	place-items: center;
-	margin: 2.5rem 0;
-	border-block: 1px solid var(--sl-color-hairline-shade);
-	border-radius: 0.5rem;
-	padding: 1.75rem 1rem;
-	background: var(--sl-color-accent-low);
-	color: var(--sl-color-text);
-	text-align: center;
-}
-.sl-markdown-content .about-verse p {
-	margin: 0;
-	font-family: 'Noto Serif CJK SC', 'Source Han Serif SC', 'Songti SC', SimSun, serif;
-	font-size: clamp(1.125rem, 2vw, 1.375rem);
-	font-weight: 500;
-	line-height: 2.3;
-	letter-spacing: 0.12em;
-}
-
 .home-category-grid {
 	display: grid;
 	grid-template-columns: repeat(2, minmax(0, 1fr));
