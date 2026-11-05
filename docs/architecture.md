@@ -11,6 +11,7 @@ Hyperbolic Space is a static Astro and Starlight blog deployed at the root GitHu
 - Both About pages preserve the author's Chinese verse as a left-aligned Markdown blockquote using Starlight's native content styling.
 - `src/lib/content.ts` owns article discovery, sorting, tags, and navigation data. `src/lib/tags.ts` owns tag normalization for both schema validation and lookups.
 - `src/components/` owns the custom header, sidebar, article widgets, and controls. `src/components/overrides/` contains Starlight integration points. `src/styles/site.css` owns site tokens and cross-component layout rules.
+- `SiteCopyright.astro` is included by the shared Starlight footer override, so existing and future content and generated landing pages receive one copyright notice at the end of the page. The holder is configured in `site.copyrightHolder`; the year is determined at build time. The global `--sl-text-h1` token controls the smaller responsive page-heading size.
 - `src/pages/` contains generated category and tag landing routes. Category entry pages derive their metadata from the taxonomy; public URLs remain `/category/` and `/zh/category/`.
 - `src/content/docs/fun.md` and `src/content/docs/zh/fun.md` own the bilingual Fun index for small tools and interactive quizzes. This section is separate from article categories; future entries belong under `/fun/` and `/zh/fun/`.
 

@@ -38,6 +38,7 @@
 	--sl-color-accent-low: var(--blog-accent-dark-low);
 	--sl-color-accent: var(--blog-accent-dark);
 	--sl-color-accent-high: var(--blog-accent-dark-high);
+	--sl-text-h1: clamp(1.75rem, 2.5vw, 2.125rem);
 }
 
 :root[data-theme='dark'] {

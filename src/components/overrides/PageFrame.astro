@@ -25,6 +25,11 @@ const { hasSidebar } = Astro.locals.starlightRoute;
 				<SidebarResizeControl />
 			</div>
 		)}
+		{!hasSidebar && (
+			<div class="blog-main-frame">
+				<slot />
+			</div>
+		)}
 	</div>
 </div>
 

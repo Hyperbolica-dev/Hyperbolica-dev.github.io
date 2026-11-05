@@ -4,5 +4,6 @@ export const site = {
 	url: 'https://hyperbolica-dev.github.io',
 	github: 'https://github.com/Hyperbolica-dev',
 	author: 'Tanh',
+	copyrightHolder: 'hyperbolica-dev',
 	avatar: '/assets/tanh-avatar.svg',
 } as const;

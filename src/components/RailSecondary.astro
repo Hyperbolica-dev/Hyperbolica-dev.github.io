@@ -2,7 +2,6 @@
 import { Icon } from '@astrojs/starlight/components';
 import { getTagCollection } from '../lib/content';
 import { localeFromPath, pathForLocale, ui } from '../lib/locale';
-import { site } from '../lib/site';
 
 const locale = localeFromPath(Astro.url.pathname);
 const labels = ui[locale];
@@ -31,9 +30,6 @@ const tags = (await getTagCollection())
 			<Icon name="right-arrow" />
 		</a>
 	</section>
-	<small class="rail-copyright">
-		© {new Date().getFullYear()} {site.author}
-	</small>
 </div>
 
 <style>
@@ -89,14 +85,6 @@ const tags = (await getTagCollection())
 	.rail-all:hover,
 	.rail-all:focus-visible {
 		text-decoration: underline;
-	}
-	.rail-copyright {
-		display: block;
-		border-top: 1px solid var(--sl-color-hairline-shade);
-		padding-top: 1rem;
-		color: var(--sl-color-gray-3);
-		font-size: var(--sl-text-xs);
-		line-height: 1.5;
 	}
 	.rail-secondary a:focus-visible {
 		outline: 2px solid var(--sl-color-accent);
