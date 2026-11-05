@@ -1,0 +1,22 @@
+---
+import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
+import Quiz from '../../../components/lmti/Quiz.astro';
+import { CONFIG } from '../../../lib/lmti/config';
+import { strings } from '../../../lib/lmti/strings.en';
+---
+
+<StarlightPage
+	frontmatter={{
+		title: strings.title,
+		description: strings.subtitle,
+		tableOfContents: false,
+		pagefind: CONFIG.PUBLISHED,
+		head: CONFIG.PUBLISHED
+			? []
+			: [{ tag: 'meta', attrs: { name: 'robots', content: 'noindex,nofollow' } }],
+	}}
+>
+	<div data-pagefind-ignore>
+		<Quiz />
+	</div>
+</StarlightPage>

@@ -1,4 +1,5 @@
 {
+	"entry": ["worker/index.mjs"],
 	"ignoreDependencies": ["katex"],
 	"ignoreUnresolved": ["/pagefind/pagefind.js"],
 }

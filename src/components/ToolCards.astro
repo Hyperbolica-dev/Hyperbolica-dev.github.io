@@ -1,0 +1,49 @@
+---
+import { CONFIG } from '../lib/lmti/config';
+import { strings } from '../lib/lmti/strings.en';
+interface Props {
+	description: string;
+	badge: string;
+}
+const { description, badge } = Astro.props;
+---
+
+<div class="tool-cards">
+	<a href={CONFIG.BASE_PATH}>
+		<strong>{strings.title}</strong>
+		<span>{description}</span>
+		<small>{badge}</small>
+	</a>
+</div>
+
+<style>
+	.tool-cards {
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(min(100%, 18rem), 1fr));
+		gap: 1rem;
+		margin-block: 1.5rem;
+	}
+	.tool-cards a {
+		display: grid;
+		gap: 0.6rem;
+		padding: 1.25rem;
+		border: 1px solid var(--sl-color-hairline);
+		border-radius: 0.65rem;
+		background: var(--sl-color-bg-sidebar);
+		color: var(--sl-color-text);
+		text-decoration: none;
+	}
+	.tool-cards a:hover {
+		border-color: var(--sl-color-text-accent);
+	}
+	.tool-cards a:focus-visible {
+		outline: 2px solid var(--sl-color-text-accent);
+		outline-offset: 3px;
+	}
+	.tool-cards strong {
+		color: var(--sl-color-text-accent);
+	}
+	.tool-cards small {
+		color: var(--sl-color-gray-2);
+	}
+</style>

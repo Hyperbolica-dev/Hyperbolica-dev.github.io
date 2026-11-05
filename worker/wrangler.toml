@@ -1,0 +1,15 @@
+name = "submit"
+main = "index.mjs"
+compatibility_date = "2026-11-05"
+workers_dev = true
+
+[vars]
+ALLOWED_ORIGIN = "https://hyperbolica-dev.github.io"
+
+[[kv_namespaces]]
+binding = "SUBMISSIONS"
+id = "32f49622cbf547659d4791868bd1b1d1"
+
+# Stats tokens occur in query strings. Do not enable invocation logging here.
+[observability]
+enabled = false

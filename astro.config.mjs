@@ -6,6 +6,8 @@ import remarkMath from 'remark-math';
 import starlight from '@astrojs/starlight';
 import { categoryIds, categories } from './src/lib/taxonomy.ts';
 import { site } from './src/lib/site.ts';
+import sitemap from '@astrojs/sitemap';
+import { CONFIG } from './src/lib/lmti/config.ts';
 
 export default defineConfig({
 	site: site.url,
@@ -16,6 +18,15 @@ export default defineConfig({
 		}),
 	},
 	integrations: [
+		sitemap({
+			filter: (page) =>
+				CONFIG.PUBLISHED ||
+				![
+					CONFIG.BASE_PATH.replace(/\/$/, ''),
+					`/zh${CONFIG.BASE_PATH.replace(/\/$/, '')}`,
+				].includes(new URL(page).pathname.replace(/\/$/, '')),
+			i18n: { defaultLocale: 'en', locales: { en: 'en', zh: 'zh-CN' } },
+		}),
 		starlight({
 			title: site.title,
 			description: site.description,

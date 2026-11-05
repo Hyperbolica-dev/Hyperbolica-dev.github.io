@@ -1,0 +1,20 @@
+---
+import { CONFIG } from '../../lib/lmti/config';
+import { strings } from '../../lib/lmti/strings.en';
+import '../../styles/lmti.css';
+---
+
+<div class="lmti-app" role="region" aria-label={strings.title} data-lmti-app>
+	{!CONFIG.PUBLISHED && <p class="lmti-ribbon">{strings.preview}</p>}
+	<div class="lmti-status" role="status" aria-live="polite" data-lmti-status></div>
+	<div data-lmti-screen></div>
+	<noscript>
+		<p>{strings.noScript}</p>
+	</noscript>
+</div>
+
+<script>
+	import { mountQuiz } from '../../lib/lmti/ui';
+	const app = document.querySelector<HTMLElement>('[data-lmti-app]');
+	if (app) mountQuiz(app);
+</script>
