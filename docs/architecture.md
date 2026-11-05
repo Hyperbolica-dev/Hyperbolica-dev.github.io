@@ -11,6 +11,7 @@ Hyperbolica is a static Astro and Starlight blog deployed at the root GitHub Pag
 - `src/lib/content.ts` owns article discovery, sorting, tags, and navigation data. `src/lib/tags.ts` owns tag normalization for both schema validation and lookups.
 - `src/components/` owns the custom header, sidebar, article widgets, and controls. `src/components/overrides/` contains Starlight integration points. `src/styles/site.css` owns site tokens and cross-component layout rules.
 - `src/pages/` contains generated category and tag landing routes. Category entry pages derive their metadata from the taxonomy; public URLs remain `/category/` and `/zh/category/`.
+- `src/content/docs/fun.md` and `src/content/docs/zh/fun.md` own the bilingual Fun index for small tools and interactive quizzes. This section is separate from article categories; future entries belong under `/fun/` and `/zh/fun/`.
 
 ## Content contract
 

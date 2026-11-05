@@ -14,6 +14,7 @@ export const ui = {
 	en: {
 		navigation: 'Navigation',
 		allArticles: 'All articles',
+		fun: 'Fun',
 		github: 'GitHub profile',
 		aboutAuthor: (author: string) => `About ${author}`,
 		avatarAlt: (author: string) => `${author} avatar`,
@@ -64,6 +65,7 @@ export const ui = {
 	zh: {
 		navigation: 'navi',
 		allArticles: '全部文章',
+		fun: '妙用工坊',
 		github: 'GitHub 主页',
 		aboutAuthor: (author: string) => `关于 ${author}`,
 		avatarAlt: (author: string) => `${author} 的头像`,

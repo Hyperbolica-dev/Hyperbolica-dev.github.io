@@ -17,6 +17,7 @@ const items = [
 		icon: categories[id].icon,
 	})),
 	{ label: labels.allArticles, href: link('/tags/'), icon: 'document' as const },
+	{ label: labels.fun, href: link('/fun/'), icon: 'puzzle' as const },
 ];
 
 const isActive = (href: string) => currentPath === href || currentPath.startsWith(href);
