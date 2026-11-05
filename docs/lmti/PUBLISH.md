@@ -6,7 +6,7 @@
 4. Set `PUBLISHED: true` and `DEBUG_ENABLED: false` in that configuration. This removes the preview ribbon/robots exclusion, admits the route to sitemap and Pagefind, and ignores debug query parameters. Cards already exist by owner request.
 5. Run `npm test`, `npm run quality`, and `npm run build`. Deploy using the normal GitHub Pages workflow. No Worker deployment occurs in the site workflow.
 
-The question-to-position mapping ships in the browser bundle and can be inspected; this is acceptable for this project. Answers are not a security boundary. KV rate limits are best-effort, as explained in the Worker README.
+The question-to-position mapping ships in the browser bundle and can be inspected; this is acceptable for this project. Answers are not a security boundary. The Worker combines native per-location throttling with a durable global daily admission budget; see its README for bootstrap, recovery and hosting-quota limitations.
 
 ## Later Chinese release
 
@@ -18,6 +18,8 @@ Add reviewed translations of question content and a same-key strings module, the
 
 ## Image export and questionnaire version
 
-Save image generates a 1200×760 PNG with the primary match, model mark, runner-ups and radar. Copy image falls back to downloading when image clipboard access is unavailable. Text and result-code copying remain secondary alternatives.
+Save image generates a 1200×760 PNG with the primary match, model mark, runner-ups and radar. An optional human nickname (up to 32 Unicode codepoints) appears on results and the image; it stays in the browser session until the user consents to submit. It is not included in result codes. Copy image falls back to downloading when image clipboard access is unavailable. Text and result-code copying remain secondary alternatives.
 
-Version 2 adds fractional positions within the existing six dimensions and stable seeded random question order. Version 1 codes are rejected rather than reinterpreted. Per-question mappings are documented in `01-questionnaire.md`. Cloudflare deployment is authorized but requires a successful Wrangler account login before a production endpoint can be configured.
+Version 2 adds fractional positions within the existing six dimensions and stable seeded random question order. Version 1 codes are rejected rather than reinterpreted. Per-question mappings are documented in `01-questionnaire.md`. The production submission service is `https://submit.hyperbolica-dev-tools.workers.dev/`; its CORS allowlist permits the production Pages origin, not localhost.
+
+The optional title subtitle reports accepted human and agent submissions, not unique people, models, or locally completed questionnaires. It shows cached public aggregate counts and stays hidden if the service is unavailable. Nicknames and answer records are never included in this public response.

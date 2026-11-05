@@ -26,6 +26,12 @@ export function parseQuestionnaire(markdown) {
   const models = [...markdown.matchAll(/^\| ([a-z]+) \| ([^|]+) \| ((?:[\d.]+ \| ){5}[\d.]+) \|$/gm)].map(m => ({
     id: m[1], name: m[2].trim(), profile: Object.fromEntries(m[3].split(' | ').map((value, i) => [`D${i + 1}`, Number(value)])), provisional: true, n_submissions: 0, profile_source: 'placeholder',
   }));
+  for (const match of markdown.matchAll(/<!-- profile:([a-z]+) source:(owner-run|measured) submissions:(\d+) -->/g)) {
+    const model = models.find(model => model.id === match[1]);
+    if (!model) throw new Error(`Unknown calibrated model: ${match[1]}`);
+    model.profile_source = match[2];
+    model.n_submissions = Number(match[3]);
+  }
   const version = /^# Questionnaire v(\d+):/m.exec(markdown);
   const bank = { version: Number(version?.[1]), dimensions, pairs, questions };
   validateQuestions(bank);

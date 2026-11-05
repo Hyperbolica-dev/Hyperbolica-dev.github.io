@@ -1,4 +1,5 @@
 import bank from '../src/lib/lmti/data/questions.json' with { type: 'json' };
+export { SubmissionLedger } from './ledger.mjs';
 
 const WHO = ['human', 'claude', 'gpt', 'gemini', 'grok', 'deepseek', 'qwen', 'kimi', 'mistral', 'other'];
 const THINK = ['off', 'low', 'medium', 'high', 'unknown'];
@@ -40,6 +41,14 @@ function validate(value) {
     || !Array.isArray(fb) || fb.length > 24) return null;
   const sanitizedModel = clean(model);
   if ([...sanitizedModel].length > 40) return null;
+  let nickname;
+  if (mode === 'human' && value.nickname !== undefined) {
+    if (typeof value.nickname !== 'string') return null;
+    nickname = value.nickname.replace(/[\p{Cc}\p{Cf}]/gu, '').trim();
+    if ([...nickname].length > 32) return null;
+  }
+  if (value.submissionId !== undefined
+    && (typeof value.submissionId !== 'string' || !/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value.submissionId))) return null;
   const seen = new Set();
   const notes = [];
   for (const item of fb) {
@@ -48,7 +57,7 @@ function validate(value) {
     seen.add(item.q);
     notes.push({ q: item.q, text: item.text });
   }
-  return { code, mode, who, model: sanitizedModel, think, fb: notes };
+  return { code, mode, who, model: sanitizedModel, think, fb: notes, ...(nickname ? { nickname } : {}) };
 }
 
 async function readBody(request) {
@@ -83,6 +92,43 @@ const hex = (bytes) => Array.from(new Uint8Array(bytes), (byte) => byte.toString
 // Dependencies are injectable for deterministic tests; production uses Worker globals.
 export function createWorker({ crypto = globalThis.crypto, now = Date.now } = {}) {
   async function hash(text) { return new Uint8Array(await crypto.subtle.digest('SHA-256', encoder.encode(text))); }
+  let countsCache;
+  let countsPending;
+  const ledger = (env) => env.SUBMISSION_LEDGER.get(env.SUBMISSION_LEDGER.idFromName('global-v1'));
+  async function rate(request, env, scope) {
+    const ip = request.headers.get('CF-Connecting-IP');
+    if (!ip || !env.RATE_SALT_SECRET || !env.SUBMIT_RATE_LIMITER) throw new Error('unavailable');
+    const key = await crypto.subtle.importKey('raw', encoder.encode(env.RATE_SALT_SECRET), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
+    const day = new Date(now()).toISOString().slice(0, 10);
+    const identifier = hex(await crypto.subtle.sign('HMAC', key, encoder.encode(`${scope}\n${day}\n${ip}`)));
+    const result = await env.SUBMIT_RATE_LIMITER.limit({ key: identifier });
+    if (typeof result?.success !== 'boolean') throw new Error('unavailable');
+    return result.success;
+  }
+  async function publicCounts(request, env) {
+    if (countsCache && countsCache.expires > now()) return countsCache;
+    if (countsPending) return countsPending;
+    countsPending = (async () => {
+      // Ignore query strings and Origin in the internal cache key. Rebuild public
+      // CORS headers for each caller rather than caching a caller's Origin.
+      const key = new Request(new URL('/counts', request.url).href);
+      const cache = globalThis.caches?.default;
+      let cached = await cache?.match(key);
+      if (cached && !(Number(cached.headers.get('X-Counts-Expires')) > now())) cached = undefined;
+      const response = cached || await ledger(env).fetch('https://ledger/counts');
+      if (!response.ok) throw new Error('unavailable');
+      const data = await response.json();
+      if (!Number.isSafeInteger(data.human) || data.human < 0 || !Number.isSafeInteger(data.agent) || data.agent < 0) throw new Error('unavailable');
+      const counts = { human: data.human, agent: data.agent };
+      const expires = cached ? Number(cached.headers.get('X-Counts-Expires')) : now() + 60_000;
+      if (!cached && cache) await cache.put(key, Response.json(counts, {
+        headers: { 'Cache-Control': 'public, max-age=60', 'X-Counts-Expires': String(expires) },
+      }));
+      countsCache = { data: counts, expires };
+      return countsCache;
+    })();
+    try { return await countsPending; } finally { countsPending = undefined; }
+  }
   async function authorized(token, secret) {
     if (!token || !secret) return false;
     const [left, right] = await Promise.all([hash(token), hash(secret)]);
@@ -101,6 +147,26 @@ export function createWorker({ crypto = globalThis.crypto, now = Date.now } = {}
       const url = new URL(request.url);
       // Non-browser administrators may query stats; submissions always require the configured origin.
       if (origin && origin !== env.ALLOWED_ORIGIN) return reply(403, { error: 'origin' });
+      if (url.pathname === '/counts') {
+        if (request.method !== 'GET') return reply(405, { error: 'method' }, { Allow: 'GET' });
+        if (!env.SUBMISSION_LEDGER) return reply(503, { error: 'unavailable' });
+        try {
+          if (!await rate(request, env, 'counts')) return reply(429, { error: 'rate' }, { 'Retry-After': '60' });
+          const cached = await publicCounts(request, env);
+          return reply(200, cached.data, { 'Cache-Control': `public, max-age=${Math.max(0, Math.floor((cached.expires - now()) / 1000))}` });
+        } catch { return reply(503, { error: 'unavailable' }); }
+      }
+      if (url.pathname === '/admin/bootstrap' && request.method === 'POST') {
+        const token = request.headers.get('Authorization')?.replace(/^Bearer /, '');
+        if (!await authorized(token, env.STATS_TOKEN)) return reply(401, { error: 'auth' });
+        if (!env.SUBMISSION_LEDGER) return reply(503, { error: 'unavailable' });
+        let seed;
+        try { seed = await readBody(request); } catch { return reply(400, { error: 'invalid' }); }
+        try {
+          const response = await ledger(env).fetch('https://ledger/bootstrap', { method: 'POST', body: JSON.stringify(seed) });
+          return reply(response.status, await response.json());
+        } catch { return reply(503, { error: 'unavailable' }); }
+      }
       if (url.pathname === '/stats' && request.method === 'GET') {
         if (!await authorized(url.searchParams.get('token'), env.STATS_TOKEN)) return reply(401, { error: 'auth' });
         if (!env.SUBMISSIONS) return reply(503, { error: 'unavailable' });
@@ -130,21 +196,24 @@ export function createWorker({ crypto = globalThis.crypto, now = Date.now } = {}
       }
       if (request.method !== 'POST') return reply(405, { error: 'method' }, { Allow: 'POST, OPTIONS' });
       if (!/^text\/plain(?:\s*;\s*charset=utf-8)?$/i.test(request.headers.get('Content-Type') || '')) return reply(400, { error: 'invalid' });
-      let payload;
-      try { payload = validate(await readBody(request)); } catch { return reply(400, { error: 'invalid' }); }
-      if (!payload) return reply(400, { error: 'invalid' });
-      const ip = request.headers.get('CF-Connecting-IP');
-      if (!env.SUBMISSIONS || !env.RATE_SALT_SECRET || !ip) return reply(503, { error: 'unavailable' });
+      if (!env.SUBMISSIONS || !env.SUBMISSION_LEDGER || !/^[1-9]\d*$/.test(env.DAILY_SUBMISSION_LIMIT || '')
+        || !Number.isSafeInteger(Number(env.DAILY_SUBMISSION_LIMIT))) return reply(503, { error: 'unavailable' });
       try {
-        const timestamp = now();
-        const day = new Date(timestamp).toISOString().slice(0, 10);
-        const key = await crypto.subtle.importKey('raw', encoder.encode(env.RATE_SALT_SECRET), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
-        const rateKey = `rate:${hex(await crypto.subtle.sign('HMAC', key, encoder.encode(`${day}\n${ip}`)))}`;
-        const previous = await env.SUBMISSIONS.get(rateKey);
-        if (previous !== null && timestamp - Number(previous) < 60_000) return reply(429, { error: 'rate' }, { 'Retry-After': '60' });
-        await env.SUBMISSIONS.put(rateKey, String(timestamp), { expirationTtl: 60 });
-        await env.SUBMISSIONS.put(`submission:${crypto.randomUUID()}`, JSON.stringify({ ts: new Date(timestamp).toISOString(), ...payload }));
-        return reply(200, { ok: true });
+        // Native rate limiting runs before reading a body or accessing storage.
+        if (!await rate(request, env, 'submit')) return reply(429, { error: 'rate' }, { 'Retry-After': '60' });
+      } catch { return reply(503, { error: 'unavailable' }); }
+      let raw, payload;
+      try { raw = await readBody(request); payload = validate(raw); } catch { return reply(400, { error: 'invalid' }); }
+      if (!payload) return reply(400, { error: 'invalid' });
+      try {
+        const digest = hex(await hash(JSON.stringify(payload)));
+        // Legacy clients have no retry UUID. Identical sanitized legacy payloads
+        // are intentionally deduplicated while the ledger is retained.
+        const id = raw.submissionId?.toLowerCase() || `legacy-${digest}`;
+        const response = await ledger(env).fetch('https://ledger/submit', {
+          method: 'POST', body: JSON.stringify({ id, digest, payload }),
+        });
+        return reply(response.status, await response.json(), response.status === 429 ? { 'Retry-After': '60' } : {});
       } catch { return reply(503, { error: 'unavailable' }); }
     },
   };

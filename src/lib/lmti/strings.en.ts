@@ -5,6 +5,11 @@ export const strings = {
 	beta: 'beta',
 	start: 'Start the quiz',
 	startNote: 'About 5 minutes. Nothing is sent anywhere unless you choose to submit.',
+	nickname: 'Nickname (optional)',
+	nicknameHelp:
+		'Up to 32 characters. Your nickname appears on your result and shared image, and is sent if you submit. Avoid real names or private information.',
+	nicknameResult: 'Nickname: {nickname}',
+	submissionCounts: 'Accepted submissions: {human} human · {agent} agent (not unique people)',
 	agentDivider: 'or test your AI agent',
 	agentCopy: 'Copy the whole quiz to your agent!',
 	agentCopied: 'Copied! Now paste it into your agent',
@@ -76,7 +81,7 @@ export const strings = {
 	imageError: 'Could not create the image. You can still copy your result as text.',
 	imageFilename: 'my-llm-match.png',
 	shareCaption:
-		'A card worth sharing. Export your profile as a PNG, without sending your answers anywhere.',
+		'A card worth sharing. Export your profile as a PNG, without sending your answers anywhere. Your optional nickname will be visible in the image.',
 	codeDetails: 'Result code & text fallback',
 	imageTitle: 'MY LLM MATCH',
 	imageDepth: 'Depth',
@@ -90,7 +95,8 @@ export const strings = {
 	retake: 'Retake',
 	backBlog: 'Back to blog',
 	submitTitle: 'Add your result to the pool (optional)',
-	submitBody: 'Anonymous. Only your answers and the tags below are sent. No name, no IP stored.',
+	submitBody:
+		'Your answers, optional notes, tags, and optional human nickname are sent only if you submit. No IP is stored with your result. Choose a nickname without identifying information; it also appears on your shared image.',
 	who: 'Who answered?',
 	families: {
 		human: 'Human',
@@ -107,10 +113,11 @@ export const strings = {
 	model: 'Model / version',
 	thinking: 'Thinking level',
 	thinkingLevels: { off: 'off', low: 'low', medium: 'medium', high: 'high', unknown: 'unknown' },
-	consent: 'I understand this will be shared anonymously.',
+	consent: 'I agree to send my answers, optional notes, tags, and optional human nickname.',
 	submit: 'Submit',
 	sending: 'Sending...',
-	submitted: 'Thanks! Added.',
+	submitted:
+		'Thank you for your submission! This will help us build little tools that better suit the needs of our carbon-based and silicon-based humans alike.',
 	submitError: "Couldn't send. Try again later.",
 	honeypot: 'Leave this field empty',
 	debugTitle: 'Debug panel',

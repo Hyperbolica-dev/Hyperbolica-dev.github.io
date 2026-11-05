@@ -22,6 +22,7 @@ type Session = {
 	index: number;
 	mode: 'human' | 'agent';
 	startedAt: number;
+	nickname: string;
 };
 
 function el<K extends keyof HTMLElementTagNameMap>(tag: K, className = '', content?: string) {
@@ -39,6 +40,11 @@ function button(label: string, action: () => void, primary = false) {
 function clean(value: string, limit: number) {
 	return Array.from(value.replace(/\p{Cc}/gu, ''))
 		.slice(0, limit)
+		.join('');
+}
+function cleanNickname(value: string) {
+	return Array.from(value.replace(/[\p{Cc}\p{Cf}]/gu, '').trim())
+		.slice(0, 32)
 		.join('');
 }
 function randomSeed() {
@@ -79,6 +85,7 @@ function loadSession(): Session | null {
 			index: saved.index,
 			mode: 'human',
 			startedAt: Number(saved.startedAt) || Date.now(),
+			nickname: typeof saved.nickname === 'string' ? cleanNickname(saved.nickname) : '',
 		};
 	} catch {
 		return null;
@@ -100,6 +107,7 @@ export function mountQuiz(app: HTMLElement) {
 	let mode: 'human' | 'agent' = 'human';
 	let answers: Answers = session?.answers ?? {};
 	let notes = session?.notes ?? {};
+	let nickname = session?.nickname ?? '';
 	let model = 'unknown';
 	let think: Think = 'unknown';
 	let who: Who = 'human';
@@ -107,7 +115,32 @@ export function mountQuiz(app: HTMLElement) {
 	let dryRun = false;
 	let submitted = false;
 	let fallback: HTMLElement | null = null;
+	const submissionIds = new Map<string, string>();
 
+	const counts = app.querySelector<HTMLElement>('[data-lmti-counts]');
+	if (counts && CONFIG.SUBMIT_ENDPOINT) {
+		void (async () => {
+			try {
+				const response = await fetch(`${CONFIG.SUBMIT_ENDPOINT.replace(/\/$/, '')}/counts`);
+				if (!response.ok) return;
+				const data: unknown = await response.json();
+				if (!data || typeof data !== 'object' || !('human' in data) || !('agent' in data)) return;
+				if (
+					typeof data.human !== 'number' ||
+					typeof data.agent !== 'number' ||
+					!Number.isSafeInteger(data.human) ||
+					!Number.isSafeInteger(data.agent) ||
+					data.human < 0 ||
+					data.agent < 0
+				)
+					return;
+				counts.textContent = text(s.submissionCounts, { human: data.human, agent: data.agent });
+				counts.hidden = false;
+			} catch {
+				/* Counts are optional; a failed request leaves the subtitle hidden. */
+			}
+		})();
+	}
 	function announce(message: string) {
 		status.textContent = '';
 		requestAnimationFrame(() => {
@@ -119,6 +152,7 @@ export function mountQuiz(app: HTMLElement) {
 		session.answers = answers;
 		session.notes = notes;
 		session.seed = seed;
+		session.nickname = nickname;
 		try {
 			sessionStorage.setItem(storageKey, JSON.stringify(session));
 		} catch {
@@ -216,6 +250,7 @@ export function mountQuiz(app: HTMLElement) {
 		think = result.think;
 		who = inferWho(model);
 		submitted = false;
+		submissionIds.clear();
 		renderResult();
 		if (result.multiple) announce(s.multipleCodes);
 	}
@@ -224,6 +259,31 @@ export function mountQuiz(app: HTMLElement) {
 		screen.replaceChildren();
 		const intro = el('section', 'lmti-intro');
 		intro.append(el('span', 'lmti-badge', s.beta), heading(s.subtitle), el('p', '', s.honesty));
+		const nicknameInput = el('input', 'lmti-input');
+		nicknameInput.type = 'text';
+		nicknameInput.setAttribute('autocomplete', 'nickname');
+		nicknameInput.value = nickname;
+		nicknameInput.setAttribute('aria-describedby', 'lmti-nickname-help');
+		nicknameInput.addEventListener('input', () => {
+			nicknameInput.value = Array.from(nicknameInput.value.replace(/[\p{Cc}\p{Cf}]/gu, ''))
+				.slice(0, 32)
+				.join('');
+			nickname = cleanNickname(nicknameInput.value);
+			if (session) {
+				session.nickname = nickname;
+				try {
+					sessionStorage.setItem(storageKey, JSON.stringify(session));
+				} catch {
+					/* The nickname remains usable when session storage is blocked. */
+				}
+			}
+		});
+		nicknameInput.addEventListener('blur', () => {
+			nicknameInput.value = nickname;
+		});
+		const nicknameHelp = el('p', 'lmti-muted', s.nicknameHelp);
+		nicknameHelp.id = 'lmti-nickname-help';
+		intro.append(field(s.nickname, nicknameInput, 'lmti-nickname'), nicknameHelp);
 		if (session && session.index < bank.questions.length)
 			intro.append(
 				button(text(s.resume, { n: session.index + 1 }), () => {
@@ -268,8 +328,9 @@ export function mountQuiz(app: HTMLElement) {
 		answers = {};
 		notes = {};
 		submitted = false;
+		submissionIds.clear();
 		seed = overrideSeed ?? randomSeed();
-		session = { seed, answers, notes, index: 0, mode, startedAt: Date.now() };
+		session = { seed, answers, notes, index: 0, mode, startedAt: Date.now(), nickname };
 		save();
 		renderQuestion();
 	}
@@ -484,7 +545,7 @@ export function mountQuiz(app: HTMLElement) {
 			bank.dimensions.map((dim) => [
 				dim.name,
 				result.dimensions[dim.id]?.toFixed(2) ?? s.noData,
-				...(enough ? [String(result.matches[0].profile[dim.id])] : []),
+				...(enough ? [result.matches[0].profile[dim.id].toFixed(2)] : []),
 			]),
 		);
 		table.className = 'lmti-sr-only';
@@ -531,6 +592,8 @@ export function mountQuiz(app: HTMLElement) {
 		const hero = el('div', 'lmti-result-hero');
 		const identity = el('section', 'lmti-result-identity');
 		identity.append(el('p', 'lmti-eyebrow', s.resultEyebrow));
+		if (mode === 'human' && nickname)
+			identity.append(el('p', 'lmti-nickname', text(s.nicknameResult, { nickname })));
 		if (enough) {
 			identity.append(
 				modelIcon(top.id),
@@ -631,6 +694,7 @@ export function mountQuiz(app: HTMLElement) {
 				result,
 				enough,
 				new URL(CONFIG.BASE_PATH, location.origin).href,
+				mode === 'human' ? nickname : undefined,
 			);
 			try {
 				if (toClipboard && typeof ClipboardItem !== 'undefined' && navigator.clipboard?.write) {
@@ -718,6 +782,7 @@ export function mountQuiz(app: HTMLElement) {
 				answers = {};
 				notes = {};
 				submitted = false;
+				submissionIds.clear();
 				renderLanding();
 			}),
 		);
@@ -769,6 +834,7 @@ export function mountQuiz(app: HTMLElement) {
 				who,
 				model,
 				think,
+				...(mode === 'human' && nickname ? { nickname } : {}),
 				fb:
 					mode === 'human'
 						? Object.entries(notes)
@@ -778,10 +844,16 @@ export function mountQuiz(app: HTMLElement) {
 				hp: hp.value,
 			};
 			try {
+				const submissionKey = JSON.stringify(payload);
+				let submissionId = submissionIds.get(submissionKey);
+				if (!submissionId) {
+					submissionId = crypto.randomUUID();
+					submissionIds.set(submissionKey, submissionId);
+				}
 				const response = await fetch(CONFIG.SUBMIT_ENDPOINT, {
 					method: 'POST',
 					headers: { 'Content-Type': 'text/plain' },
-					body: JSON.stringify(payload),
+					body: JSON.stringify({ ...payload, submissionId }),
 				});
 				if (!response.ok || (await response.json()).ok !== true) throw new Error('submit');
 				submitted = true;
@@ -836,6 +908,7 @@ export function mountQuiz(app: HTMLElement) {
 					think = 'unknown';
 					notes = {};
 					submitted = false;
+					submissionIds.clear();
 					answers = {};
 					for (const q of bank.questions) {
 						const positions = q.options
@@ -858,6 +931,7 @@ export function mountQuiz(app: HTMLElement) {
 						index: bank.questions.length,
 						mode,
 						startedAt: Date.now(),
+						nickname,
 					};
 					save();
 					renderResult();

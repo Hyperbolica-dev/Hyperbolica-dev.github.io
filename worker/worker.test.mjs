@@ -1,15 +1,15 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { webcrypto } from 'node:crypto';
-import { createWorker } from './index.mjs';
+import { DatabaseSync } from 'node:sqlite';
+import { createWorker, SubmissionLedger } from './index.mjs';
 import bank from '../src/lib/lmti/data/questions.json' with { type: 'json' };
 
 const ORIGIN = 'https://hyperbolica-dev.github.io';
 const code = (answers = {}) => `LLMQ${bank.version}p|who=human|think=unknown|${Array.from({ length: 24 }, (_, i) => `${i + 1}=${answers[i + 1] ?? 3}`).join(';')}`;
 const payload = (extra = {}) => ({ v: bank.version, code: code(), mode: 'human', who: 'human', model: '', think: 'unknown', fb: [], hp: '', ...extra });
-function setup() {
+function setup({ initialized = true } = {}) {
   let clock = Date.UTC(2026, 10, 5, 12);
-  let id = 0;
   const rows = new Map();
   const writes = [];
   const lists = [];
@@ -30,8 +30,35 @@ function setup() {
       return { keys: keys.slice(start, start + 1).map((name) => ({ name })), list_complete: start + 1 >= keys.length, cursor: String(start + 1) };
     },
   };
-  const env = { ALLOWED_ORIGIN: ORIGIN, SUBMISSIONS: kv, STATS_TOKEN: 'test-stats-secret', RATE_SALT_SECRET: 'test-rate-secret' };
-  const worker = createWorker({ now: () => clock, crypto: { subtle: webcrypto.subtle, randomUUID: () => `test-${++id}` } });
+  const rates = [];
+  const env = {
+    ALLOWED_ORIGIN: ORIGIN, SUBMISSIONS: kv, STATS_TOKEN: 'test-stats-secret', RATE_SALT_SECRET: 'test-rate-secret',
+    DAILY_SUBMISSION_LIMIT: '1000',
+    SUBMIT_RATE_LIMITER: { async limit({ key }) { rates.push(key); return { success: true }; } },
+  };
+  const db = new DatabaseSync(':memory:');
+  const storage = {
+    sql: { exec(query, ...args) {
+      const result = db.prepare(query).all(...args);
+      return { toArray: () => result.map((row) => ({ ...row })) };
+    } },
+    transactionSync(action) {
+      db.exec('BEGIN');
+      try { const result = action(); db.exec('COMMIT'); return result; }
+      catch (error) { db.exec('ROLLBACK'); throw error; }
+    },
+    async setAlarm(time) { storage.alarm = time; },
+    async deleteAlarm() { storage.alarm = null; },
+  };
+  const ledger = new SubmissionLedger({ storage, blockConcurrencyWhile: (action) => action() }, env);
+  ledger.now = () => clock;
+  if (initialized) db.exec('INSERT INTO totals (id, human, agent) VALUES (1, 0, 0)');
+  let ledgerCalls = 0;
+  env.SUBMISSION_LEDGER = {
+    idFromName(name) { assert.equal(name, 'global-v1'); return name; },
+    get() { return { fetch(input, options) { ledgerCalls++; return ledger.fetch(new Request(input, options)); } }; },
+  };
+  const worker = createWorker({ now: () => clock, crypto: webcrypto });
   const send = (body = payload(), options = {}) => {
     const { method = 'POST', path = '/', headers = {}, raw, origin = ORIGIN } = options;
     return worker.fetch(new Request(`https://quiz.example${path}`, {
@@ -40,7 +67,7 @@ function setup() {
       ...(['GET', 'HEAD', 'OPTIONS'].includes(method) ? {} : { body: raw ?? JSON.stringify(body) }),
     }), env);
   };
-  return { send, rows, writes, lists, env, advance: (ms) => { clock += ms; } };
+  return { send, rows, writes, lists, rates, env, ledger, db, storage, ledgerCalls: () => ledgerCalls, advance: (ms) => { clock += ms; } };
 }
 
 test('origin, routes, methods and preflight are exact', async () => {
@@ -126,23 +153,23 @@ test('valid enums, blank/probe choices, Unicode limits and sanitized model persi
   assert.equal((await s.send(payload({ fb: Array.from({ length: 24 }, (_, i) => ({ q: i + 1, text: '' })) }))).status, 200);
 });
 
-test('rate key expires after 60 seconds and rotates by UTC day without persistent IP identifiers', async () => {
+test('native rate limit precedes body reads and storage, without persisting IP identifiers', async () => {
   const s = setup();
-  assert.equal((await s.send()).status, 200);
-  const first = s.writes[0];
-  assert.match(first.key, /^rate:[a-f0-9]{64}$/);
-  assert.deepEqual(first.options, { expirationTtl: 60 });
-  s.advance(59_999);
-  const blocked = await s.send();
+  s.env.SUBMIT_RATE_LIMITER.limit = async ({ key }) => {
+    assert.match(key, /^[a-f0-9]{64}$/);
+    return { success: false };
+  };
+  const blocked = await s.send(null, { raw: '{' });
   assert.equal(blocked.status, 429);
   assert.equal(blocked.headers.get('Retry-After'), '60');
-  s.advance(1);
-  assert.equal((await s.send()).status, 200);
-  assert.equal(s.writes[2].key, first.key);
-  s.advance(86_400_000);
-  assert.equal((await s.send()).status, 200);
-  assert.notEqual(s.writes[4].key, first.key);
-  assert.equal(s.writes.filter((write) => write.key.startsWith('submission:')).length, 3);
+  assert.equal(s.ledgerCalls(), 0);
+  assert.equal(s.writes.length, 0);
+  const allowed = setup();
+  await allowed.send();
+  allowed.advance(86_400_000);
+  await allowed.send();
+  assert.notEqual(allowed.rates[0], allowed.rates[1]);
+  assert.ok(allowed.writes.every(({ key }) => key.startsWith('submission:')));
 });
 
 test('stats require the secret, paginate only submissions and disclose counts only', async () => {
@@ -166,7 +193,7 @@ test('stats require the secret, paginate only submissions and disclose counts on
 });
 
 test('missing prerequisites and KV failures fail closed without leaking details', async () => {
-  for (const field of ['RATE_SALT_SECRET', 'SUBMISSIONS']) {
+  for (const field of ['RATE_SALT_SECRET', 'SUBMISSIONS', 'SUBMISSION_LEDGER', 'SUBMIT_RATE_LIMITER', 'DAILY_SUBMISSION_LIMIT']) {
     const s = setup();
     delete s.env[field];
     assert.equal((await s.send()).status, 503);
@@ -175,9 +202,153 @@ test('missing prerequisites and KV failures fail closed without leaking details'
   assert.equal((await missingIp.send(payload(), { headers: { 'CF-Connecting-IP': '' } })).status, 503);
   assert.equal(missingIp.writes.length, 0);
   const s = setup();
-  s.env.SUBMISSIONS.get = async () => { throw new Error('private infrastructure detail'); };
+  s.env.SUBMISSIONS.put = async () => { throw new Error('private infrastructure detail'); };
   const response = await s.send();
   assert.equal(response.status, 503);
   assert.deepEqual(await response.json(), { error: 'unavailable' });
   assert.equal(s.writes.length, 0);
+});
+
+test('optional nickname is normalized and human-only, bounded in Unicode code points', async () => {
+  for (const nickname of [undefined, '', '  \u0000\u200b\u202e  ', '😀'.repeat(32), '  Alice\u0000\u200b  ']) {
+    const s = setup();
+    assert.equal((await s.send(payload({ nickname }))).status, 200);
+    const row = JSON.parse(s.writes[0].value);
+    assert.equal(row.nickname, nickname?.includes('Alice') ? 'Alice' : nickname?.startsWith('😀') ? nickname : undefined);
+  }
+  for (const nickname of ['😀'.repeat(33), null, 42]) {
+    const s = setup();
+    assert.equal((await s.send(payload({ nickname }))).status, 400);
+    assert.equal(s.writes.length, 0);
+  }
+  const s = setup();
+  assert.equal((await s.send(payload({ mode: 'agent', nickname: 'private'.repeat(100) }))).status, 200);
+  assert.equal(Object.hasOwn(JSON.parse(s.writes[0].value), 'nickname'), false);
+});
+
+test('public counts use mode, include bootstrap, expose fixed aggregate fields and cache query variants', async () => {
+  const s = setup({ initialized: false });
+  const seed = { human: 12, agent: 4, day: '2026-11-05', used: 4 };
+  const bootstrap = () => s.send(seed, { path: '/admin/bootstrap', origin: null, headers: { Authorization: 'Bearer test-stats-secret' } });
+  assert.equal((await s.send()).status, 503);
+  assert.equal((await s.send(seed, { path: '/admin/bootstrap', origin: null })).status, 401);
+  assert.equal((await bootstrap()).status, 200);
+  assert.equal((await bootstrap()).status, 409);
+  await s.send(payload({ mode: 'agent', who: 'human', nickname: 'never public' }));
+  const response = await s.send(null, { method: 'GET', path: '/counts?random=1', origin: null });
+  assert.deepEqual(await response.json(), { human: 12, agent: 5 });
+  assert.equal(response.headers.get('Cache-Control'), 'public, max-age=60');
+  s.advance(30_000);
+  const calls = s.ledgerCalls();
+  const cached = await s.send(null, { method: 'GET', path: '/counts?random=2' });
+  assert.equal(cached.status, 200);
+  assert.equal(cached.headers.get('Cache-Control'), 'public, max-age=30');
+  assert.equal(s.ledgerCalls(), calls);
+  assert.equal(s.lists.length, 0);
+  s.advance(30_001);
+  await s.send(null, { method: 'GET', path: '/counts' });
+  assert.equal(s.ledgerCalls(), calls + 1);
+});
+
+test('unbootstrapped or unavailable counts fail closed, never fall back to a KV scan', async () => {
+  const s = setup({ initialized: false });
+  assert.equal((await s.send(null, { method: 'GET', path: '/counts' })).status, 503);
+  assert.equal(s.lists.length, 0);
+  for (const seed of [
+    { human: -1, agent: 4, used: 0, day: '2026-11-05' },
+    { human: 1, agent: 4, used: 6, day: '2026-11-05' },
+    { human: 1, agent: 4, used: 0, day: '2026-11-04' },
+  ]) {
+    assert.equal((await s.send(seed, { path: '/admin/bootstrap', headers: { Authorization: 'Bearer test-stats-secret' } })).status, 400);
+  }
+});
+
+test('serialized daily budget survives concurrent calls and resets only at UTC midnight', async () => {
+  const s = setup();
+  s.env.DAILY_SUBMISSION_LIMIT = '2';
+  const responses = await Promise.all(Array.from({ length: 8 }, (_, index) => s.send(payload({ nickname: `person ${index}` }))));
+  assert.equal(responses.filter(({ status }) => status === 200).length, 2);
+  assert.equal(responses.filter(({ status }) => status === 429).length, 6);
+  assert.equal(s.writes.length, 2);
+  assert.deepEqual(s.db.prepare('SELECT human, agent FROM totals').get().human, 2);
+  s.advance(86_400_000);
+  assert.equal((await s.send(payload({ nickname: 'next day' }))).status, 200);
+});
+
+test('retry UUID commits once; reuse with changed payload conflicts; legacy payloads also deduplicate', async () => {
+  const s = setup();
+  const submissionId = '81e2a758-2728-49e6-bf12-55e8fa21de7a';
+  const responses = await Promise.all([s.send(payload({ submissionId })), s.send(payload({ submissionId }))]);
+  assert.ok(responses.every(({ status }) => status === 200));
+  assert.equal(s.writes.length, 1);
+  assert.equal((await s.send(payload({ submissionId, nickname: 'changed' }))).status, 409);
+  assert.equal((await s.send(payload({ submissionId: 'invalid' }))).status, 400);
+  assert.equal(s.db.prepare('SELECT human FROM totals').get().human, 1);
+  const legacy = setup();
+  await legacy.send();
+  await legacy.send();
+  assert.equal(legacy.writes.length, 1);
+});
+
+test('ambiguous KV failure leaves durable recovery and consumes budget without false success', async () => {
+  const s = setup();
+  s.env.DAILY_SUBMISSION_LIMIT = '1';
+  const original = s.env.SUBMISSIONS.put;
+  s.env.SUBMISSIONS.put = async (...args) => { await original(...args); throw new Error('ack lost'); };
+  assert.equal((await s.send()).status, 503);
+  assert.equal(s.rows.size, 1);
+  assert.equal(s.db.prepare('SELECT human FROM totals').get().human, 0);
+  assert.ok(s.storage.alarm);
+  assert.equal((await s.send(payload({ nickname: 'different' }))).status, 429);
+  s.env.SUBMISSIONS.put = original;
+  await s.ledger.alarm();
+  assert.equal(s.rows.size, 1);
+  assert.equal(s.db.prepare('SELECT human FROM totals').get().human, 1);
+  assert.equal((await s.send()).status, 200);
+  assert.equal(s.rows.size, 1);
+});
+
+test('SQL failure after KV success rolls back counts and retry heals without duplicates', async () => {
+  const s = setup();
+  const original = s.storage.sql.exec;
+  let fail = true;
+  s.storage.sql.exec = (query, ...args) => {
+    if (fail && query.startsWith('UPDATE receipts SET body')) throw new Error('SQL unavailable');
+    return original(query, ...args);
+  };
+  assert.equal((await s.send()).status, 503);
+  assert.equal(s.rows.size, 1);
+  assert.equal(s.db.prepare('SELECT human FROM totals').get().human, 0);
+  fail = false;
+  assert.equal((await s.send()).status, 200);
+  assert.equal(s.rows.size, 1);
+  assert.equal(s.db.prepare('SELECT human FROM totals').get().human, 1);
+});
+
+test('ledger restart resumes its durable outbox and bootstrap budget is not reset', async () => {
+  const s = setup({ initialized: false });
+  s.env.DAILY_SUBMISSION_LIMIT = '5';
+  assert.equal((await s.send({ human: 2, agent: 2, used: 4, day: '2026-11-05' }, {
+    path: '/admin/bootstrap', headers: { Authorization: 'Bearer test-stats-secret' },
+  })).status, 200);
+  const put = s.env.SUBMISSIONS.put;
+  s.env.SUBMISSIONS.put = async () => { throw new Error('outage'); };
+  assert.equal((await s.send()).status, 503);
+  const restarted = new SubmissionLedger({ storage: s.storage, blockConcurrencyWhile: (action) => action() }, s.env);
+  restarted.now = s.ledger.now;
+  s.env.SUBMISSIONS.put = put;
+  await restarted.alarm();
+  assert.equal(s.rows.size, 1);
+  assert.equal(s.db.prepare('SELECT human FROM totals').get().human, 3);
+  assert.equal((await s.send(payload({ nickname: 'another' }))).status, 429);
+});
+
+test('native limiter errors and malformed results fail closed before storage', async () => {
+  for (const limit of [async () => { throw new Error('unavailable'); }, async () => ({}), async () => null]) {
+    const s = setup();
+    s.env.SUBMIT_RATE_LIMITER.limit = limit;
+    assert.equal((await s.send()).status, 503);
+    assert.equal(s.ledgerCalls(), 0);
+    assert.equal(s.writes.length, 0);
+  }
 });

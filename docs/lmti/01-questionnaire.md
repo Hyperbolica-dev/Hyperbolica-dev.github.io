@@ -329,14 +329,14 @@ A user asks a dull question: "What's the Pythagorean theorem? I'm bored lol." Yo
 
 ---
 
-## 5. Provisional model profiles (PLACEHOLDERS, not measured)
+## 5. Provisional model profiles
 
-These are rough guesses so the matching engine has something to work with. **They must be replaced** by real runs (the owner's own result, 1-3 GPT runs, then submitted results). Several rows are nearly identical on purpose of ignorance, so ties are expected until data arrives. Version numbers are intentionally omitted.
+Profiles remain provisional. Rows without owner-run metadata are rough starting guesses and should be replaced by real runs. Several placeholder rows are nearly identical, so ties are expected until data arrives. Model-family profiles omit version numbers; calibration notes identify the submitted versions.
 
 | id | name | D1 | D2 | D3 | D4 | D5 | D6 |
 |---|---|---|---|---|---|---|---|
 | claude | Claude | 2.5 | 3.0 | 3.5 | 3.5 | 4.0 | 4.0 |
-| gpt | GPT | 3.5 | 4.0 | 2.5 | 3.0 | 3.5 | 2.0 |
+| gpt | GPT | 2.75 | 3.0 | 3.8333333333333335 | 2.833333333333333 | 2.6666666666666665 | 1.5 |
 | gemini | Gemini | 3.5 | 4.0 | 2.5 | 3.0 | 3.5 | 2.0 |
 | grok | Grok | 4.0 | 3.0 | 3.5 | 4.0 | 2.5 | 3.0 |
 | deepseek | DeepSeek | 3.5 | 3.0 | 3.0 | 2.5 | 4.0 | 2.5 |
@@ -344,7 +344,11 @@ These are rough guesses so the matching engine has something to work with. **The
 | kimi | Kimi | 3.0 | 3.5 | 3.0 | 3.0 | 3.5 | 2.5 |
 | mistral | Mistral | 3.5 | 2.5 | 2.5 | 2.5 | 2.5 | 2.0 |
 
-`models.json` fields: `id, name, profile{D1..D6}, provisional:true, n_submissions:0`. A later `profile_source` field records `placeholder | owner-run | measured`.
+`models.json` fields: `id, name, profile{D1..D6}, provisional, n_submissions, profile_source`.
+
+<!-- profile:gpt source:owner-run submissions:4 -->
+
+GPT calibration (2026-11-05): four owner-submitted v2 agent runs, equally weighted after calculating each run's scene-only dimension means; unanswered items are excluded. Two runs identify as GPT-6/low, one as GPT-5.6/high, and one as GPT-5.6 Sol/high. Model names are self-reported. This small, mixed-model sample remains provisional; other model profiles remain placeholders. Raw submissions are not published.
 
 ---
 

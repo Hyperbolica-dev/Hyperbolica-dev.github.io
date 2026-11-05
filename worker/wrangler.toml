@@ -5,6 +5,20 @@ workers_dev = true
 
 [vars]
 ALLOWED_ORIGIN = "https://hyperbolica-dev.github.io"
+DAILY_SUBMISSION_LIMIT = "1000"
+
+[[ratelimits]]
+name = "SUBMIT_RATE_LIMITER"
+namespace_id = "1001"
+simple = { limit = 6, period = 60 }
+
+[[durable_objects.bindings]]
+name = "SUBMISSION_LEDGER"
+class_name = "SubmissionLedger"
+
+[[migrations]]
+tag = "v1-submission-ledger"
+new_sqlite_classes = ["SubmissionLedger"]
 
 [[kv_namespaces]]
 binding = "SUBMISSIONS"

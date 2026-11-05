@@ -1,5 +1,5 @@
 import type { Bank, ScoreResult } from './types';
-import { strings as s } from './strings.en';
+import { strings as s, text } from './strings.en';
 import { modelIconUrl } from './model-icons';
 
 /** Local, self-contained PNG: no answer code, notes, network request, or external renderer. */
@@ -8,6 +8,7 @@ export async function createResultImage(
 	result: ScoreResult,
 	enough: boolean,
 	url: string,
+	nickname?: string,
 ): Promise<Blob> {
 	const canvas = document.createElement('canvas');
 	canvas.width = 1200;
@@ -54,6 +55,11 @@ export async function createResultImage(
 	}
 	label(s.imageTitle, 48, 57, 18, color.accent, 700);
 	label(s.resultEyebrow, 48, 90, 20, color.muted);
+	if (nickname) {
+		ctx.textAlign = 'right';
+		label(text(s.nicknameResult, { nickname }), 1152, 90, 22, color.ink, 600, 650);
+		ctx.textAlign = 'left';
+	}
 	panel(32, 120, 548, 456);
 	panel(600, 120, 568, 456);
 	const top = result.matches[0];

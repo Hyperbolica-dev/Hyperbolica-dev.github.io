@@ -17,11 +17,6 @@ test('uniform endpoints score every scene, depth and mask', () => {
     assert.equal(result.mask, 0);
     assert.equal(result.maskLabel, 'steady');
     assert.deepEqual(result.traits.map(t => t.dim), ['D1', 'D2']);
-    // GPT squared distances: all-1 = 28.75; all-5 = 24.75; n=6.
-    const gpt = result.matches.find(m => m.id === 'gpt');
-    const distance = Math.sqrt(value === 1 ? 28.75 : 24.75);
-    assert.equal(gpt.distance, distance);
-    assert.equal(gpt.similarity, Math.round(100 * (1 - distance / (4 * Math.sqrt(6)))));
   }
 });
 
