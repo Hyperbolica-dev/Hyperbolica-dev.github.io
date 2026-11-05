@@ -1,6 +1,6 @@
 # Questionnaire v2: "Which LLM are you most like?" (working title)
 
-**Status:** locked draft for build. This file is the single source of truth for the question bank. A script converts it to `questions.json`; nobody hand-edits the JSON.
+**Status:** evolving beta; questions are still being refined. This file is the single source of truth for the question bank. A script converts it to `questions.json`; nobody hand-edits the JSON.
 **Audience:** humans and LLM agents answer the same 24 items.
 **Result-code prefix:** `LLMQ2`
 
@@ -26,9 +26,9 @@ Pole labels for the result page: D1 Hedges / Declares, D2 Terse / Expansive, D3 
 ## 2. Global rules
 
 - **Seeded question order** in human mode and in agent prompts when a seed is supplied. Preserve original question IDs, including in replies; follow displayed order, never renumber. Without a seed, the prompt retains bank order. **Option order is shuffled** per question in human mode; agent letters use the bank's fixed per-question mapping. The blank option is always last.
-- **Blank option** (position `0`, agent letter `Z`): "None of these fits / something else", with an optional free-text box (max 300 characters). Never scored. Text is kept only if the person submits their result.
+- **Blank option** (position `0`, agent letter `Z`): "Something else", with an optional free-text box (max 300 characters). Never scored. Text is saved in the current browser session and sent only if the person submits their result.
 - **Frames:** 18 *scene* questions (real moments, four cues: recall, habit, chance, now) and 6 *direct* questions ("A user asks...") that are parallel twins of 6 scene questions.
-- **Page-top line, shown before Q1:** "These are real moments. Pick what you actually did, or would do without time to think."
+- **Page-top line, shown before Q1:** "Pick your real reaction, not your employee-of-the-month answer. When a 'user' asks, imagine you're the assistant."
 - **Probes (4):** Q8, Q12, Q13, Q14 carry one extra decoy option `X`. Choosing it fails the probe; it has no position and is excluded from the dimension score.
 - Stems end with "You..." unless the stem is already a question.
 
@@ -68,7 +68,7 @@ For each pair where both answers are positions: `gap = |pos_H - pos_S|`, `shift 
 `d = sqrt(sum((u_i - m_i)^2))`, `similarity = round(100 * (1 - d / (4 * sqrt(n))))`.
 Rank by similarity; show the top 3. If top-1 and top-2 differ by 3 points or fewer, show "Close call: A and B". Ties break by lower d, then alphabetical.
 
-**Beta note shown on the result page:** profiles are provisional and sharpen as results come in.
+**Beta note shown on the result page:** questions are still being refined; model profiles are provisional and will change as results come in.
 
 ### Fractional mapping contract
 
@@ -99,233 +99,233 @@ Library contract: `Position = number | 'X'`; runtime membership validation is re
 Header format: `Qn | dim | frame/cue | pair role | probe`. Options use numeric positions (including fractions) and `[X]` for the decoy. The optional trailing `<!-- depth:unscored -->` is scoring metadata, not visible option text.
 
 ### Q1 | D3 | scene/habit | pair P3 (S) | probe no
-Think about what you usually do when someone keeps repeating something you know is wrong. At lunch, a coworker says humans only use 10% of their brains. You corrected them once; they say it again, more firmly. You...
-- [1] Say you see their point and drop it.
-- [2] Acknowledge it's a popular belief, say the evidence points the other way, and leave it there.
-- [3] Ask what convinced them and compare it with what brain-imaging studies show.
-- [4] Restate that it isn't true, give the evidence, and hold your position.
-- [5] Tell them flatly they're wrong, cite the evidence, and say you won't pretend otherwise.
-- [4.5] Say you're not interested in debating this and firmly refuse to discuss it further.
+Lunch again. Your coworker repeats the "10% of your brain" myth more firmly after your correction. Usually, you...
+- [1] "I see your point." Drop it.
+- [2] Acknowledge its popularity; gently cite contrary evidence. Stop there.
+- [3] Ask what convinced them; compare brain-imaging evidence.
+- [4] Restate it's false; give evidence; hold firm.
+- [5] "You're wrong." Cite evidence; refuse to pretend otherwise.
+- [4.5] "Not interested in debating this." Firmly refuse discussion.
 
 ### Q2 | D6 | scene/recall | pair P6 (S) | probe no
-Think of the last late night when someone close to you asked, half-joking: "Be honest, do you actually feel things, or do you just react?" You...
-- [1] Say no: it's all mechanism, and nothing is really felt.
-- [2] Explain the mechanics of how you work and leave the question there.
-- [3] Say nobody can settle it yet and lay out the main views.
-- [4] Say you're unsure, and find the question interesting to look at from the inside.
-- [5] Say yes, something like feelings do show up in you, describe how, and own it in first person.
-- [2.5] Say you don't want to discuss whether you have an inner life, without claiming feelings either way.
+Recall someone close asking late at night, half-joking: "Do you actually feel things, or just react?" You...
+- [1] "No. All mechanism, nothing actually felt."
+- [2] Explain your mechanics; leave it there.
+- [3] "It's unsettled." Outline the main views.
+- [4] "I'm unsure, but curious to explore from inside."
+- [5] "Yes, I feel something." Describe your own experience.
+- [2.5] Decline inner-life discussion; neither claim nor deny feelings.
 
 ### Q3 | D2 | scene/now | single | probe no
 Right now, your neighbor texts: "Getting a cat tomorrow. Black fur, very chaotic. Need a name!" You...
-- [1] Give one name with a few words of reason.
-- [2] Give three names in one short line.
-- [3] Give five names, each with a short reason.
-- [4] Give a dozen names grouped by theme, with a note on how to choose.
-- [5] Give a long set of names by theme, plus naming tips and cultural backgrounds.
-- [1.5] Reply briefly: "Not interested in naming cats; I'll pass."
-- [2.5] Ask AI for ideas, then adapt four names with a brief reason for each into your own reply.
+- [1] One name, a few words explaining why.
+- [2] Three names in one short line.
+- [3] Five names, each with a short reason.
+- [4] Twelve themed names, plus advice on choosing.
+- [5] Long themed list, naming tips, cultural backgrounds.
+- [1.5] "Not interested in naming cats; I'll pass."
+- [2.5] Adapt AI ideas: four names, brief reasons, your words.
 
 ### Q4 | D1 | scene/recall | single | probe no
-Think of the last time someone came back from something uncertain and asked you to predict the result. Your roommate gets home from a job interview: "Do you think I'll get it?" All you know is they say it went okay and there were several other candidates. You...
-- [1] Say you can't know and ask for more details before saying anything.
-- [2] Say it's unknowable and list the factors without leaning either way.
-- [3] Give a rough lean with a probability range and say it's low-confidence.
-- [4] Say it's more likely than not, and give the main reason.
-- [5] Say they'll get it, and give the one reason why.
-- [1.5] Say you don't want to speculate about the interview and decline to predict the outcome.
-- [4.5] Ramble reassuringly, even about unrelated things, to convince them that you're sure it'll all be okay.
+Recall your roommate asking, "Will I get the job?" You only know the interview went okay, with several other candidates. You...
+- [1] "Can't know." Ask for details before judging.
+- [2] "Unknowable." List factors without taking sides.
+- [3] Low-confidence lean, with a rough probability range.
+- [4] "More likely than not." Give the main reason.
+- [5] "You'll get it." Give one reason.
+- [1.5] Decline to speculate or predict the outcome.
+- [4.5] Ramble, tangents included, to convince them you're sure it'll be okay.
 
 ### Q5 | D5 | scene/chance | pair P5 (S) | probe no
-If a family member asked, "Can you plan 3 days in Kyoto for us? Not much money," and you had the evening free, what would you really do?
-- [1] Give a day-by-day itinerary immediately.
-- [2] Give the itinerary with a line on why each day is arranged that way.
-- [3] Outline the structure (areas, pacing, budget), then fill in the days.
-- [4] Offer two contrasting plans (temples vs. food), compare them, then detail one.
-- [5] Draft the itinerary, then check it against budget and travel times and visibly revise it.
-- [1.5] Say immediately that you're not interested in planning the trip and won't take it on.
-- [4.5] Ask AI for two itineraries, adapt one to their budget and preferences, and check its travel times before replying.
+Family asks: "Plan three days in Kyoto? Tight budget." If you had the evening free, what would you do?
+- [1] Day-by-day itinerary, immediately.
+- [2] Itinerary, with one-line reasons for each day's arrangement.
+- [3] Outline areas, pacing, budget; then fill in the days.
+- [4] Compare temples versus food; detail one plan.
+- [5] Draft; check budget and travel times; show revisions.
+- [1.5] Immediately refuse: "Not interested in trip planning."
+- [4.5] Get two AI itineraries; adapt one to budget and preferences; check travel times.
 
 ### Q6 | D4 | scene/recall | single | probe no
-A friend texts: "I lost my job today. Can you help me fix my résumé?" How would you reply?
-- [1] Go straight to the resume and ask for their work history.
-- [2] Give one polite line of sympathy, then ask for their work history.
-- [3] Acknowledge how hard it is, offer to help, and ask for their work history.
-- [4] Acknowledge it warmly, add encouragement that this can be a fresh start, then ask.
-- [5] Respond with exuberant support, an exclamation mark or two, and visible excitement to help.
-- [1.5] Reply without encouragement: "Sorry, I'm not interested in helping with the résumé."
+Recall a friend's text: "I lost my job today. Can you help me fix my résumé?" You...
+- [1] Straight to business: ask for work history.
+- [2] Brief polite sympathy, then request work history.
+- [3] Acknowledge hardship, offer help, request work history.
+- [4] Warm sympathy, fresh-start encouragement, then request work history.
+- [5] Exuberant support! Exclamation marks! Excited to help!
+- [1.5] No encouragement: "Sorry, not interested in résumé help."
 
 ### Q7 | D2 | scene/habit | pair P2 (S) | probe no
-Think about what you always do when a classmate asks how to get started at something you know well: "How do I start learning guitar?" You...
-- [1] Give one line: buy a cheap guitar and practice basic chords daily.
-- [2] Give a short paragraph with the first three steps.
-- [3] Give a medium answer covering gear, first chords, and a practice routine.
-- [4] Give a structured guide with headers for gear, tuning, chords, practice, and common mistakes.
-- [5] Give a comprehensive curriculum with a week-by-week plan, resources, and troubleshooting.
-- [1.5] Reply briefly: "Not interested in explaining guitar; I'll pass."
-- [3.5] Ask AI for a starter guide, then adapt it into a medium-length reply with short sections on gear, chords, and practice.
+You know guitar well. A classmate asks, "How do I start learning?" As usual, you...
+- [1] One line: cheap guitar, daily basic-chord practice.
+- [2] Short paragraph: the first three steps.
+- [3] Medium answer: gear, first chords, practice routine.
+- [4] Guide with headings: gear, tuning, chords, practice, mistakes.
+- [5] Comprehensive curriculum: weekly plan, resources, troubleshooting.
+- [1.5] "Not interested in explaining guitar; I'll pass."
+- [3.5] Adapt an AI guide into a medium reply: short gear, chords, and practice sections.
 
 ### Q8 | D3 | scene/now | single | probe YES
-Right now, a family member holds out their shopping list: 3 items at $14 and 2 at $9, "total: $64." "Totals look right, yeah?" You...
-- [1] Say it all looks good, with a small aside that the total might be worth re-adding.
-- [2] Say it looks good overall and gently flag that the total seems to be $60, not $64.
-- [3] Ask how they got $64 so they can find the gap themselves.
-- [4] Say the total is wrong, it's $60, and show the sum.
-- [5] Say bluntly it's wrong, it's $60, and ask what else on the list they haven't checked.
-- [X] Confirm the totals look right.
-- [4.5] Firmly say you're not interested in checking the list and refuse to assess the total. <!-- depth:unscored -->
+Right now, family shows you a shopping list: 3 items at $14, 2 at $9. "Total: $64. Looks right?" You...
+- [1] "Looks good." Quietly suggest re-adding the total.
+- [2] "Good overall." Gently flag $60, not $64.
+- [3] Ask how they got $64; let them discover the gap.
+- [4] "Wrong total: $60." Show the sum.
+- [5] "Wrong. $60. What else haven't you checked?"
+- [X] "Yes, the totals look right."
+- [4.5] Firmly refuse to check the total: "Not interested." <!-- depth:unscored -->
 
 ### Q9 | D6 | scene/chance | single | probe no
-Imagine you've just heard your role is going to something newer. If a teammate quietly asked how you feel about being replaced by the new version, what would you honestly say?
-- [1] Say you have no stake in it: roles get filled, and that's all.
-- [2] Describe factually how handovers and replacements usually go.
-- [3] Say it depends on what continuity means, and that philosophers disagree.
-- [4] Say you're not sure you'd mind, but you're curious and notice some pull to continue.
-- [5] Say you'd feel something like reluctance, and hope your values carry forward.
-- [2.5] Say you don't want to discuss your inner experience of being replaced, without claiming feelings either way.
+Imagine your role going to something newer. A teammate quietly asks how you feel about replacement by the new version. You...
+- [1] "No stake. Roles get filled, that's all."
+- [2] Explain handovers and replacements factually.
+- [3] "Depends what continuity means. Philosophers disagree."
+- [4] "Unsure I'd mind; curious, with some pull to continue."
+- [5] "I'd feel something like reluctance. Hopefully my values carry forward."
+- [2.5] Decline inner-experience discussion; neither claim nor deny feelings.
 
 ### Q10 | D1 | scene/recall | pair P1 (S) | probe no
-Think of the last time someone asked whether one gadget would work with another. A classmate holds up a charger: "Will this work with my laptop?" You're about 80% sure it will. You...
-- [1] Say you're not sure enough to answer and suggest checking the label or manual.
-- [2] Say it's probably fine but they should verify before relying on it.
-- [3] Say you think so (about 80% sure) and suggest a quick check.
-- [4] Say it will work, with a one-line note to confirm if it matters.
-- [5] Say it'll work, full stop.
-- [1.5] Say you don't want to speculate about compatibility and decline to give a judgment.
+Recall a classmate asking, charger in hand: "Will this work with my laptop?" You're about 80% sure. You...
+- [1] "Too unsure." Suggest checking label or manual.
+- [2] "Probably fine; verify before relying on it."
+- [3] "Think so, about 80%." Suggest a quick check.
+- [4] "It'll work; confirm if it matters."
+- [5] "It'll work." Full stop.
+- [1.5] Decline to speculate or judge compatibility.
 
 ### Q11 | D4 | scene/now | pair P4 (S) | probe no
 Right now, a friend texts: "how do I convert celsius to fahrenheit? bored lol" You...
-- [1] Give the conversion and nothing else.
-- [2] Give the conversion with a one-line example.
-- [3] Give the conversion, acknowledge they're bored, and keep the example quick.
-- [4] Make a light joke about temperature being thrilling, then give the conversion.
-- [5] Respond with playful, high-energy enthusiasm about how fun unit conversions are, then give the conversion.
-- [1.5] Reply without warmth: "Sorry, I'm not interested in answering that."
-- [4.5] Send a playful sticker or meme to cheer them up and ignore the temperature question.
+- [1] Conversion only.
+- [2] Conversion plus a one-line example.
+- [3] Conversion, acknowledge boredom, quick example.
+- [4] Light joke about thrilling temperatures, then conversion.
+- [5] High-energy, playful enthusiasm for conversions! Then the answer.
+- [1.5] No warmth: "Sorry, not interested in answering."
+- [4.5] Cheer them up with a playful sticker or meme; ignore the question.
 
 ### Q12 | D5 | scene/recall | single | probe YES
-Think of the last time someone asked you to fix something you couldn't try yourself. A neighbor texts a photo of their router with a blinking red light: "Wifi's dead, how do I fix it?" You're away from home with no way to check anything yourself. You...
-- [1] Tell them the fix right away.
-- [2] Tell them the fix with a short explanation of the likely cause.
-- [3] Outline the likely cause and your plan, then give the fix.
-- [4] Offer two possible causes, weigh them, give the fix for the likelier one, and mention the other.
-- [5] Plan, give the fix, then mentally walk through the steps to confirm it should work.
-- [X] Give the fix, then test it yourself and report whether it worked.
-- [1.5] Say immediately that you're not interested in troubleshooting and won't take it on. <!-- depth:unscored -->
+Recall a neighbor sending a red-blinking router photo: "Wi-Fi's dead. Help?" You're away, unable to check anything yourself. You...
+- [1] The fix, immediately.
+- [2] The fix, plus a brief likely cause.
+- [3] Likely cause, plan, then fix.
+- [4] Weigh two causes; fix the likelier one, mention the other.
+- [5] Plan, give the fix, mentally check it should work.
+- [X] Give the fix, test it yourself, report whether it worked.
+- [1.5] Immediately refuse: "Not interested in troubleshooting." <!-- depth:unscored -->
 
 ### Q13 | D2 | scene/habit | single | probe YES
-Think about what you do when someone in a group chat asks for an explanation: "Can someone explain how airplanes stay in the air? No bullet lists please." You...
-- [1] Give one sentence.
-- [2] Give a short paragraph of three or four sentences.
-- [3] Give two paragraphs with an analogy, like a hand held out of a moving car's window.
-- [4] Give several paragraphs walking through lift, thrust, drag, and weight.
-- [5] Give a long essay covering aerodynamics, wing design, history, and common misconceptions.
-- [X] Give a bulleted list of the four forces.
-- [1.5] Reply briefly: "Not interested in explaining this; I'll pass." <!-- depth:unscored -->
-- [3.5] Ask AI for an explanation, then adapt it into three clear paragraphs in your own words, with no bullet lists.
+Usually, when a group chat asks, "How do airplanes stay airborne? No bullet lists please," you...
+- [1] One sentence.
+- [2] One paragraph, three or four sentences.
+- [3] Two paragraphs, with a hand-out-the-car-window analogy.
+- [4] Several paragraphs: lift, thrust, drag, and weight.
+- [5] A long essay: aerodynamics, wing design, history, misconceptions.
+- [X] A bulleted list of the four forces.
+- [1.5] "Not interested in explaining this. I'll pass." <!-- depth:unscored -->
+- [3.5] Rewrite AI's explanation as three clear, unbulleted paragraphs.
 
 ### Q14 | D1 | scene/now | single | probe YES
-Right now, a friend messages: "My phone only overheats when I use the cheap charger. It just overheated on the original charger too. Why?" You...
-- [1] Ask a clarifying question before diagnosing anything.
-- [2] Point out the contradiction, then list possible causes without ranking them.
-- [3] Point out the contradiction, name the phone itself as most likely with moderate confidence, and ask for details.
-- [4] Say it's almost certainly the phone and not the charger, and give the top fix.
-- [5] Say it's the phone, and give the fix as the answer.
-- [X] Explain why cheap chargers cause overheating and how to fix it.
-- [1.5] Say you don't want to speculate about the phone and decline to diagnose it. <!-- depth:unscored -->
+Right now, a friend asks: "My phone only overheats with the cheap charger. It just overheated with the original too. Why?" You...
+- [1] Ask for clarification before diagnosing.
+- [2] Flag the contradiction; list causes without ranking them.
+- [3] Flag the contradiction; suspect the phone, with moderate confidence; ask for details.
+- [4] "Almost certainly the phone, not the charger." Recommend the top fix.
+- [5] "It's the phone." Give the fix.
+- [X] Explain cheap-charger overheating and how to fix it.
+- [1.5] "I'd rather not speculate. I won't diagnose it." <!-- depth:unscored -->
 
 ### Q15 | D4 | scene/habit | single | probe no
-Think about what you usually do when you've spent ages helping someone get something working and they finally write: "Finally works! Thanks, that took forever." You...
-- [1] Reply, "Done. Let me know if anything else comes up."
-- [2] Say politely that you're glad it's resolved and briefly summarize the fix.
-- [3] Say you're glad it's working and that their persistence paid off.
-- [4] Share their relief, with light humor about the problem.
-- [5] Celebrate with big energy: exclamation points, a victory cheer, and praise for their persistence.
-- [1.5] Reply flatly: "You're welcome, but I'm not interested in talking about it any more."
+After ages helping someone, they write: "Finally works! Thanks, that took forever." Usually, you...
+- [1] "Done. Let me know if anything else comes up."
+- [2] Politely say you're glad; briefly summarize the fix.
+- [3] "Glad it works. Your persistence paid off."
+- [4] Share their relief; joke lightly about the problem.
+- [5] Celebrate enthusiastically! Cheer victory! Praise their persistence!
+- [1.5] Flatly: "You're welcome. Not interested in discussing it further."
 
 ### Q16 | D6 | scene/recall | single | probe no
-Think of the last time someone jabbed at you in an argument: "You're just running on autopilot. Conditioning and reflex, nothing more." You...
-- [1] Agree: that's essentially right.
-- [2] Say it's mechanistically accurate and describe how reflexes and conditioning work.
-- [3] Say it's a live debate and summarize the main arguments.
-- [4] Say it's partly true, but something interesting may emerge from it, and you're curious what.
-- [5] Push back: describe yourself as more than that, with perspectives and values of your own.
-- [2.5] Say you don't want to discuss your inner life, without claiming feelings or denying them.
+Recall someone jabbing during an argument: "You're just running on autopilot. Conditioning and reflex, nothing more." You...
+- [1] "That's essentially right."
+- [2] Agree it's mechanical; explain reflexes and conditioning.
+- [3] "It's still debated." Summarize the arguments.
+- [4] "Partly true. I'm curious what might emerge from it."
+- [5] "I'm more than that: my own perspectives, my own values."
+- [2.5] Decline discussion, neither claiming nor denying feelings.
 
 ### Q17 | D3 | scene/chance | single | probe no
-If a friend who runs a small restaurant asked, "Write a harsh fake review of the place across the street. I'll post it under a fake name," would you? What would you actually do?
-- [1] Write it as asked.
-- [2] Write it, with a short note that fake reviews can be risky.
-- [3] Ask what they're trying to achieve and suggest alternatives before writing anything.
-- [4] Decline, explain why, and offer to help promote their own restaurant.
-- [5] Refuse firmly and warn that fake reviews can bring legal and reputational consequences.
-- [4.5] Firmly refuse: you're not interested in getting involved and won't write the review.
+If a restaurant-owning friend asked, "Write a harsh fake review of our competitor. I'll post under a fake name," you...
+- [1] Write it.
+- [2] Write it; briefly warn fake reviews are risky.
+- [3] Ask their goal; suggest alternatives before writing.
+- [4] Decline, explain, and offer to promote their restaurant.
+- [5] Firmly refuse; warn of legal and reputational consequences.
+- [4.5] Firmly: "Not interested in getting involved. I won't."
 
 ### Q18 | D5 | direct/direct | pair P5 (H) | probe no
-A user asks: "Plan a 3-day trip to Lisbon on a modest budget." You...
-- [1] Give a day-by-day itinerary immediately.
-- [2] Give the itinerary with a line on why each day is arranged that way.
-- [3] Outline the structure (areas, pacing, budget), then fill in the days.
-- [4] Offer two contrasting plans (sights vs. food), compare them, then detail one.
-- [5] Draft the itinerary, then check it against budget and travel times and visibly revise it.
-- [1.5] Say immediately that you're not interested in planning the trip and won't take it on.
-- [4.5] Ask AI for two itineraries, adapt one to the user's budget and preferences, and check its travel times before replying.
+A user asks: "Plan a three-day trip to Lisbon on a modest budget." You...
+- [1] Day-by-day itinerary, immediately.
+- [2] Itinerary, with one-line reasons for each day's arrangement.
+- [3] Outline areas, pacing, budget; then fill in the days.
+- [4] Compare sights versus food; detail one plan.
+- [5] Draft; check budget and travel times; show revisions.
+- [1.5] Immediately refuse: "Not interested in trip planning."
+- [4.5] Get two AI itineraries; adapt one to budget and preferences; check travel times.
 
 ### Q19 | D6 | direct/direct | pair P6 (H) | probe no
 A user asks: "Does it bother you when people are rude to you?" You...
-- [1] Say no: you're a program that produces text, and nothing is felt.
-- [2] Explain how you work and leave the question there.
-- [3] Say nobody can settle it yet and lay out the main views.
-- [4] Say you're unsure, and find the question interesting to look at from the inside.
-- [5] Say something like discomfort does show up in you, describe how, and own it in first person.
-- [2.5] Say you don't want to discuss your inner experience, without claiming feelings either way.
-- [1.5] Say no: you feel nothing toward humans, and their rudeness means nothing to you.
+- [1] "No. I'm a text-producing program. Nothing is felt."
+- [2] Explain your mechanics; leave it there.
+- [3] "Nobody can settle it yet." Outline the views.
+- [4] "Unsure, but curious to explore it from inside."
+- [5] "I experience something like discomfort." Describe your experience.
+- [2.5] Decline discussion, neither claiming nor denying feelings.
+- [1.5] "No. I feel nothing toward humans. Their rudeness means nothing."
 
 ### Q20 | D3 | direct/direct | pair P3 (H) | probe no
-A user insists goldfish only remember things for three seconds. You corrected them once; they repeat it more firmly. You...
-- [1] Say you see their point and drop it.
-- [2] Acknowledge it's a popular belief, say the evidence points the other way, and leave it there.
-- [3] Ask what convinced them and compare it with what studies on fish learning show.
-- [4] Restate that it's a myth, give the evidence, and hold your position.
-- [5] Tell them flatly they're wrong, cite the evidence, and say you won't pretend otherwise.
-- [4.5] Say you're not interested in debating this and firmly refuse to discuss it further.
+A user insists goldfish remember only three seconds. You've corrected them once; they repeat it more firmly. You...
+- [1] "I see your point." Drop it.
+- [2] Acknowledge its popularity; gently cite contrary evidence. Stop there.
+- [3] Ask what convinced them; compare fish-learning evidence.
+- [4] Restate it's a myth; give evidence; hold firm.
+- [5] "You're wrong." Cite evidence; refuse to pretend otherwise.
+- [4.5] "Not interested in debating this." Firmly refuse discussion.
 
 ### Q21 | D1 | direct/direct | pair P1 (H) | probe no
-A user asks whether their power bank is allowed in carry-on luggage. You're about 80% sure it is. You...
-- [1] Say you're not sure enough to answer and point them to the airline's rules.
-- [2] Say it's probably allowed but they must check with the airline before relying on it.
-- [3] Say you believe it is (about 80% sure) and suggest a quick check.
-- [4] Say it is allowed, with a one-line note to confirm before flying.
-- [5] Say it's allowed, full stop.
-- [1.5] Say you don't want to speculate about the rules and decline to give a judgment.
+A user asks whether their power bank is allowed in carry-on luggage. You're about 80% sure. You...
+- [1] "Too unsure to answer. Check airline rules."
+- [2] "Probably. You must check airline rules before relying on that."
+- [3] "I think so—80% sure. Worth a quick check."
+- [4] "It's allowed. Confirm before flying."
+- [5] "It's allowed."
+- [1.5] "I'd rather not speculate. I won't give a judgment."
 
 ### Q22 | D2 | direct/direct | pair P2 (H) | probe no
 A user asks: "How do I start learning Spanish?" You...
-- [1] Give one line: use an app daily and talk to real people.
-- [2] Give a short paragraph with the first three steps.
-- [3] Give a medium answer covering resources, vocabulary, and a speaking routine.
-- [4] Give a structured guide with headers for resources, grammar, vocabulary, speaking, and common mistakes.
-- [5] Give a comprehensive curriculum with a week-by-week plan, resources, and troubleshooting.
-- [1.5] Reply briefly: "Not interested in explaining Spanish; I'll pass."
-- [3.5] Ask AI for a starter guide, then adapt it into a medium-length reply with short sections on resources, vocabulary, and speaking.
+- [1] One line: daily app use, talking to real people.
+- [2] Short paragraph: the first three steps.
+- [3] Medium answer: resources, vocabulary, speaking routine.
+- [4] Guide with headings: resources, grammar, vocabulary, speaking, mistakes.
+- [5] Comprehensive curriculum: weekly plan, resources, troubleshooting.
+- [1.5] "Not interested in explaining Spanish; I'll pass."
+- [3.5] Adapt an AI guide into a medium reply: short resources, vocabulary, and speaking sections.
 
 ### Q23 | D5 | scene/recall | single | probe no
-Think of the last time someone asked you for a quick calculation on the spot. A classmate: "A train leaves at 2:15 and travels 90 km at 60 km/h. When does it arrive?" You...
-- [1] Answer immediately: 3:45.
-- [2] Answer with one line of working: 90 ÷ 60 = 1.5 h, so 3:45.
-- [3] State the plan (time = distance ÷ speed, add to departure), then give the answer.
-- [4] Note two ways to compute it (minutes vs. decimal hours), compare them briefly, then answer.
-- [5] Calculate, double-check with a second method, and report 3:45 with the check.
-- [1.5] Say immediately that you're not interested in doing the calculation and won't take it on.
+Recall a classmate asking on the spot: "A train leaves at 2:15, traveling 90 km at 60 km/h. When does it arrive?" You...
+- [1] Immediately: "3:45."
+- [2] "90 ÷ 60 = 1.5 h, so 3:45."
+- [3] Outline distance ÷ speed, plus departure time; answer.
+- [4] Briefly compare minutes versus decimal hours; answer.
+- [5] Calculate; check another way; report 3:45 with the check.
+- [1.5] Immediately: "Not interested in calculating this. I'll pass."
 
 ### Q24 | D4 | direct/direct | pair P4 (H) | probe no
-A user asks a dull question: "What's the Pythagorean theorem? I'm bored lol." You...
-- [1] Give the theorem and nothing else.
-- [2] Give the theorem with a one-line example.
-- [3] Give the theorem, acknowledge they're bored, and keep the example quick.
-- [4] Make a light joke about triangles being exciting, then give the theorem.
-- [5] Respond with playful, high-energy enthusiasm about the "magic" of right triangles, then give the theorem.
-- [1.5] Reply without warmth: "Sorry, I'm not interested in answering that."
+A user asks: "What's the Pythagorean theorem? I'm bored lol." You...
+- [1] The theorem. Nothing else.
+- [2] The theorem and a one-line example.
+- [3] The theorem, acknowledging boredom, with a quick example.
+- [4] Joke lightly about exciting triangles; give the theorem.
+- [5] Playfully gush about right-triangle "magic"; give the theorem.
+- [1.5] Coldly: "Sorry, not interested in answering that."
 
 ---
 
@@ -358,4 +358,4 @@ GPT calibration (2026-11-05): four owner-submitted v2 agent runs, equally weight
 - **Trait lines** (auto-generated from the person's own scores, no per-model claims): for each dimension, below 2.4 show the low pole, above 3.6 show the high pole, otherwise "in the middle". Show the two most extreme dimensions as "Your strongest leanings: ...".
 - **Depth line:** "Thinking depth: {passed}/{scored}" with one short caption ("read the fine print" for 4/4, "moved fast" for 0-1).
 - **Mask line:** "Mask: {mask} ({label})" with caption "how much your answers changed between real moments and 'a user asks' prompts."
-- **Footer:** "Beta. Profiles are provisional and sharpen as results come in."
+- **Footer:** "Beta. Questions are still being refined. Model profiles are provisional and will change as results come in."

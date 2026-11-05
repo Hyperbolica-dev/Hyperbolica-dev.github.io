@@ -23,3 +23,17 @@ Save image generates a 1200×760 PNG with the primary match, model mark, runner-
 Version 2 adds fractional positions within the existing six dimensions and stable seeded random question order. Version 1 codes are rejected rather than reinterpreted. Per-question mappings are documented in `01-questionnaire.md`. The production submission service is `https://submit.hyperbolica-dev-tools.workers.dev/`; its CORS allowlist permits the production Pages origin, not localhost.
 
 The optional title subtitle reports accepted human and agent submissions, not unique people, models, or locally completed questionnaires. It shows cached public aggregate counts and stays hidden if the service is unavailable. Nicknames and answer records are never included in this public response.
+
+## Concise English wording
+
+The human-facing copy and copied agent questionnaire use the same canonical text. The concise revision retains all 24 items, option positions, six dimensions, paired prompts and attention checks. It removes repeated setup and explanatory padding rather than silently creating a shorter, differently scored test. Anthropomorphism, playful refusal and overenthusiastic responses are intentional.
+
+Reading fewer words is not proof of a particular completion time. Do not advertise a timed completion claim without human testing. Wording can affect answers even when numeric mappings stay unchanged: the four-run GPT calibration predates this revision and remains a provisional reference, not evidence of equivalence between wordings.
+
+Editorial references:
+
+- [GOV.UK Design System: Question pages](https://design-system.service.gov.uk/patterns/question-pages/) — current maintained pattern: one question per page, clear heading, back/continue controls and valid uncertainty responses. Retain the existing single-question flow; do not auto-advance choices.
+- [Pew Research Center: Writing Survey Questions](https://www.pewresearch.org/writing-survey-questions/) — foundational guidance published in 2021, not a new study: concrete wording, distinct response meanings, context/order effects and pretesting. Do not assume a copy edit preserves empirical calibration.
+- [Government Analysis Function: Questionnaire design guidance](https://analysisfunction.civilservice.gov.uk/policy-store/questionnaire-design-guidance/) — published 14 March 2023 and explicitly marked as under review when consulted: reduce respondent effort, write for the audience and test understanding alongside usability. Used as supporting guidance, not as a newly validated quiz format.
+
+These sources inform presentation and wording; none validates this recreational LLM-matching questionnaire or its humor.

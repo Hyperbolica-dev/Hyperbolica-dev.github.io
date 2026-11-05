@@ -1,10 +1,11 @@
 export const strings = {
 	title: 'Which LLM are you most like?',
-	subtitle: "24 real-life moments. Pick what you'd actually do.",
-	honesty: 'These are real moments. Pick what you actually did, or would do without time to think.',
+	subtitle: '24 small choices. One suspiciously familiar AI.',
+	honesty:
+		"Pick your real reaction, not your employee-of-the-month answer. When a 'user' asks, imagine you're the assistant.",
 	beta: 'beta',
 	start: 'Start the quiz',
-	startNote: 'About 5 minutes. Nothing is sent anywhere unless you choose to submit.',
+	startNote: 'No essays required. Nothing is sent unless you choose to submit.',
 	nickname: 'Nickname (optional)',
 	nicknameHelp:
 		'Up to 32 characters. Your nickname appears on your result and shared image, and is sent if you submit. Avoid real names or private information.',
@@ -18,14 +19,15 @@ export const strings = {
 	decode: 'Decode result',
 	resume: 'Resume (question {n})',
 	progress: 'Question {n} of 24',
-	blank: 'None of these fits / something else',
-	blankPlaceholder: "Tell me what you'd actually do (optional)",
+	blank: 'Something else',
+	blankPlaceholder: 'Your version? (optional)',
 	noteCount: '{n}/300 characters',
 	back: 'Back',
 	next: 'Next',
 	finish: 'See my result',
 	tipKeys: 'Tip: press 1–{n}, then Enter',
-	betaFooter: 'Beta. Profiles are provisional and sharpen as results come in.',
+	betaFooter:
+		'Beta. Questions are still being refined. Model profiles are provisional and will change as results come in.',
 	preview: 'Preview, not published',
 	debugBanner: 'Debug on. Not for public.',
 	noScript: 'This quiz needs JavaScript.',
