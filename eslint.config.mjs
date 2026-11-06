@@ -3,7 +3,7 @@ import typescriptParser from '@typescript-eslint/parser';
 import astro from 'eslint-plugin-astro';
 
 export default [
-	{ ignores: ['dist/**', '.astro/**', 'node_modules/**', '**/.wrangler/**'] },
+	{ ignores: ['dist/**', '.astro/**', 'node_modules/**', '**/.wrangler/**', 'llmq/**'] },
 	js.configs.recommended,
 	...astro.configs['flat/recommended'],
 	{

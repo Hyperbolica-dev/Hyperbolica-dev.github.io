@@ -2,6 +2,8 @@
 
 Personal blog built with Astro and Starlight.
 
+LLMQ is maintained in [its own repository](https://github.com/Hyperbolica-dev/llmq), pinned here as the `llmq/` submodule. Clone with `git clone --recurse-submodules`, or run `git submodule update --init` before the commands below. Quiz changes and contributions belong upstream; this blog keeps the published routes stable.
+
 ## Commands
 
 ```sh

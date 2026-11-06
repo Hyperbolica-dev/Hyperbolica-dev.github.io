@@ -1,0 +1,3 @@
+[submodule "llmq"]
+	path = llmq
+	url = https://github.com/Hyperbolica-dev/llmq.git

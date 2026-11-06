@@ -8,8 +8,8 @@
 		"build": "npm run quiz:data && astro build",
 		"preview": "astro preview",
 		"astro": "astro",
-		"quiz:data": "node --experimental-strip-types scripts/build-questions.mjs && node --experimental-strip-types scripts/validate-questions.mjs",
-		"test": "npm run quiz:data && node --experimental-strip-types --test tests/*.test.mjs worker/*.test.mjs",
+		"quiz:data": "npm --prefix llmq run quiz:data",
+		"test": "npm --prefix llmq test",
 		"quality": "astro check && eslint . && prettier --check \"src/**/*.{astro,ts,css}\" astro.config.mjs eslint.config.mjs package.json knip.jsonc .prettierrc.json \"docs/*.md\" README.md AGENTS.md \".agents/skills/**/*.md\" \".github/workflows/*.yml\" && knip && astro build"
 	},
 	"dependencies": {
