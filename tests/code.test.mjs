@@ -1,10 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
-import { decodeReply, encodeResult } from '../src/lib/lmti/code.ts';
-import { shuffleOptions, shuffleQuestions } from '../src/lib/lmti/shuffle.ts';
-import { generateAgentPrompt } from '../src/lib/lmti/agent.ts';
-const bank = JSON.parse(await readFile(new URL('../src/lib/lmti/data/questions.json', import.meta.url)));
+import { decodeReply, encodeResult } from '../src/lib/llmq/code.ts';
+import { shuffleOptions, shuffleQuestions } from '../src/lib/llmq/shuffle.ts';
+import { generateAgentPrompt } from '../src/lib/llmq/agent.ts';
+const bank = JSON.parse(await readFile(new URL('../src/lib/llmq/data/questions.json', import.meta.url)));
 const entries = (value = 'A') => bank.questions.map(q => `${q.n}=${value}`).join(';');
 
 test('every bank option round-trips through both positional and fixed-letter codes', () => {
@@ -18,6 +18,16 @@ test('every bank option round-trips through both positional and fixed-letter cod
     }
   }
   assert.ok(Object.values(decodeReply(`LLMQ3a|${entries('Z')}`, bank).answers).every(v => v === 0));
+});
+
+test('published Q5 agent letters retain their meanings when explicit refusal is added', () => {
+  const published = [4, 5, 3, 1, 2, 4.5, 'S'];
+  for (const [index, expected] of [...published, 'R'].entries()) {
+    const letter = String.fromCharCode(65 + index);
+    const decoded = decodeReply(`LLMQ3a|${entries('Z').replace('5=Z;', `5=${letter};`)}`, bank);
+    assert.equal(decoded.ok, true);
+    assert.equal(decoded.answers.q5, expected);
+  }
 });
 
 test('fences, case, whitespace, commas and multiline work; first code wins', () => {
@@ -47,8 +57,8 @@ test('missing, duplicate, malformed and out-of-bank answers reject the entire co
   }
 });
 
-test('U T S X require membership and decimal equivalence preserves numeric answers', () => {
-  for (const token of ['U', 'T', 'S', 'X']) {
+test('U T S R X require membership and decimal equivalence preserves numeric answers', () => {
+  for (const token of ['U', 'T', 'S', 'R', 'X']) {
     const decoded = decodeReply(`LLMQ3p|${entries(token.toLowerCase())}`, bank);
     const missing = bank.questions.filter(q => !q.options.some(o => o.pos === token));
     if (missing.length) assert.deepEqual(decoded.invalid.map(v => v.q), missing.map(q => q.n));

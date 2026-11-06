@@ -2,7 +2,7 @@
 
 Astro 7.2 / Starlight 0.42 render a static root GitHub Pages site; GitHub Actions deploys `dist/`. Run `npm run dev`, `npm test`, and `npm run quality`.
 
-The standalone English route is `src/pages/fun/llm-quiz/index.astro`, using `StarlightPage` and the existing header/sidebar/footer/theme. Quiz CSS is scoped in `src/styles/lmti.css`, using existing Starlight tokens; no frontend or chart library is added. `src/lib/lmti/config.ts` owns configuration, `strings.en.ts` owns quiz interface strings, and the supplied question Markdown owns the bank. Agent prompt wording stays with its generator. Generation and structural validation run with the production build.
+The standalone English route is `src/pages/fun/llm-quiz/index.astro`, using `StarlightPage` and the existing header/sidebar/footer/theme. Quiz CSS is scoped in `src/styles/llmq.css`, using existing Starlight tokens; no frontend or chart library is added. `src/lib/llmq/config.ts` owns configuration, `strings.en.ts` owns quiz interface strings, and the supplied question Markdown owns the bank. Agent prompt wording stays with its generator. Generation and structural validation run with the production build.
 
 The bilingual Fun indexes were migrated from Markdown to MDX without changing URLs. Cards are visible immediately per owner instruction, including on the Chinese index, and point to the English beta. Chinese quiz translation is deliberately not published yet. No article taxonomy/schema change is required.
 

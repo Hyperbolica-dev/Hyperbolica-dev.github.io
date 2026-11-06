@@ -20,7 +20,7 @@ export function validateQuestions(bank) {
     requireCondition(q.kind === undefined || ['choose', 'dislike'].includes(q.kind), `Invalid question kind on ${q.id}`);
     const positions = q.options.map(option => option.pos);
     requireCondition(q.options.every(option => typeof option.text === 'string' && option.text.length > 0), `Missing option text on ${q.id}`);
-    requireCondition(positions.length <= 25 && new Set(positions).size === positions.length && [1, 2, 3, 4, 5].every(pos => positions.includes(pos)) && positions.every(pos => ['X', 'S', 'U', 'T'].includes(pos) || (Number.isFinite(pos) && pos >= 1 && pos <= 5)) && positions.filter(p => p === 'X').length === (q.probe ? 1 : 0), `Invalid positions on ${q.id}`);
+    requireCondition(positions.length <= 25 && new Set(positions).size === positions.length && [1, 2, 3, 4, 5].every(pos => positions.includes(pos)) && positions.every(pos => ['X', 'S', 'R', 'U', 'T'].includes(pos) || (Number.isFinite(pos) && pos >= 1 && pos <= 5)) && positions.filter(p => p === 'X').length === (q.probe ? 1 : 0), `Invalid positions on ${q.id}`);
     requireCondition(!positions.includes('T') || [11, 24].includes(q.n), `Sticker outside Q11/Q24 on ${q.id}`);
     requireCondition(q.options.every(option => option.depth === undefined || (q.probe && ['failed', 'unscored'].includes(option.depth))), `Invalid Depth metadata on ${q.id}`);
     requireCondition(q.options.every(option => option.tags === undefined || (Array.isArray(option.tags) && new Set(option.tags).size === option.tags.length && option.tags.every(tag => ['hedge', 'delegate'].includes(tag)))), `Invalid tags on ${q.id}`);
@@ -47,14 +47,15 @@ export function validateModels(models) {
     requireCondition(typeof model.id === 'string' && !!model.id && typeof model.name === 'string' && !!model.name && typeof model.provisional === 'boolean' && Number.isInteger(model.n_submissions) && model.n_submissions >= 0, 'Invalid model metadata');
     requireCondition(model.profile_source === undefined || ['placeholder', 'owner-run', 'measured'].includes(model.profile_source), `Invalid profile source for ${model.id}`);
     requireCondition(model.calibration_version === undefined || (typeof model.calibration_version === 'string' && /^LLMQ\d+$/.test(model.calibration_version)), `Invalid calibration version for ${model.id}`);
+    requireCondition(model.calibration_language === undefined || ['en', 'zh-CN'].includes(model.calibration_language), `Invalid calibration language for ${model.id}`);
     requireCondition(Object.keys(model.profile).length === 6 && Array.from({ length: 6 }, (_, i) => model.profile[`D${i + 1}`]).every(value => Number.isFinite(value) && value >= 1 && value <= 5), `Invalid profile for ${model.id}`);
   }
   return models;
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
-  validateQuestions(JSON.parse(await readFile(new URL('../src/lib/lmti/data/questions.json', import.meta.url), 'utf8')));
-  validateQuestions(JSON.parse(await readFile(new URL('../src/lib/lmti/data/questions.zh-CN.json', import.meta.url), 'utf8')));
-  validateModels(JSON.parse(await readFile(new URL('../src/lib/lmti/data/models.json', import.meta.url), 'utf8')));
+  validateQuestions(JSON.parse(await readFile(new URL('../src/lib/llmq/data/questions.json', import.meta.url), 'utf8')));
+  validateQuestions(JSON.parse(await readFile(new URL('../src/lib/llmq/data/questions.zh-CN.json', import.meta.url), 'utf8')));
+  validateModels(JSON.parse(await readFile(new URL('../src/lib/llmq/data/models.json', import.meta.url), 'utf8')));
   console.log('Question bank and model profiles are valid.');
 }

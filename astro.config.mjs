@@ -7,7 +7,7 @@ import starlight from '@astrojs/starlight';
 import { categoryIds, categories } from './src/lib/taxonomy.ts';
 import { site } from './src/lib/site.ts';
 import sitemap from '@astrojs/sitemap';
-import { CONFIG } from './src/lib/lmti/config.ts';
+import { CONFIG } from './src/lib/llmq/config.ts';
 
 export default defineConfig({
 	site: site.url,

@@ -1,4 +1,4 @@
-export type Position = number | 'X' | 'S' | 'U' | 'T';
+export type Position = number | 'X' | 'S' | 'R' | 'U' | 'T';
 export type DimensionId = 'D1' | 'D2' | 'D3' | 'D4' | 'D5' | 'D6';
 export type Answers = Record<string, Position>;
 export interface Question {
@@ -34,6 +34,7 @@ export interface Model {
 	n_submissions: number;
 	profile_source?: 'placeholder' | 'owner-run' | 'measured';
 	calibration_version?: string;
+	calibration_language?: 'en' | 'zh-CN';
 }
 interface PairScore {
 	id: string;

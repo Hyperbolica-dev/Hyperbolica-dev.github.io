@@ -1,4 +1,4 @@
-import bank from '../src/lib/lmti/data/questions.json' with { type: 'json' };
+import bank from '../src/lib/llmq/data/questions.json' with { type: 'json' };
 export { SubmissionLedger } from './ledger.mjs';
 
 const WHO = ['human', 'claude', 'gpt', 'gemini', 'grok', 'deepseek', 'qwen', 'kimi', 'mistral', 'other'];
@@ -24,9 +24,9 @@ function validCode(code) {
   if (entries.length !== 24) return false;
   const seen = new Set();
   for (const entry of entries) {
-    const match = /^([1-9]|1[0-9]|2[0-4])=(0|[1-5](?:\.\d+)?|[XSUT])$/.exec(entry);
+    const match = /^([1-9]|1[0-9]|2[0-4])=(0|[1-5](?:\.\d+)?|[XSRUT])$/.exec(entry);
     if (!match || seen.has(match[1])) return false;
-    const value = /^[XSUT]$/.test(match[2]) ? match[2] : Number(match[2]);
+    const value = /^[XSRUT]$/.test(match[2]) ? match[2] : Number(match[2]);
     const question = bank.questions[Number(match[1]) - 1];
     if (String(value) !== match[2] || (value !== 0 && !question.options.some(({ pos }) => pos === value))) return false;
     seen.add(match[1]);
@@ -54,6 +54,17 @@ function validate(value) {
     if (!Number.isSafeInteger(value.durationMs) || value.durationMs < 0 || value.durationMs > MAX_DURATION_MS) return null;
     durationMs = value.durationMs;
   }
+  let memory;
+  if (mode === 'agent' && value.memory !== undefined) {
+    if (!['unknown', 'off', 'on', 'temporary'].includes(value.memory)) return null;
+    memory = value.memory;
+  }
+  let submissionNotes;
+  if (value.submissionNotes !== undefined) {
+    if (typeof value.submissionNotes !== 'string') return null;
+    submissionNotes = value.submissionNotes.replace(/[\p{Cc}\p{Cf}]/gu, '').trim();
+    if ([...submissionNotes].length > 300) return null;
+  }
   if (value.submissionId !== undefined
     && (typeof value.submissionId !== 'string' || !/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value.submissionId))) return null;
   const seen = new Set();
@@ -64,7 +75,7 @@ function validate(value) {
     seen.add(item.q);
     notes.push({ q: item.q, text: item.text });
   }
-  return { code, mode, who, model: sanitizedModel, think, fb: notes, ...(value.language !== undefined ? { language: value.language } : {}), ...(nickname ? { nickname } : {}), ...(durationMs !== undefined ? { durationMs } : {}) };
+  return { code, mode, who, model: sanitizedModel, think, fb: notes, ...(value.language !== undefined ? { language: value.language } : {}), ...(nickname ? { nickname } : {}), ...(durationMs !== undefined ? { durationMs } : {}), ...(memory !== undefined ? { memory } : {}), ...(submissionNotes ? { submissionNotes } : {}) };
 }
 
 async function readBody(request) {

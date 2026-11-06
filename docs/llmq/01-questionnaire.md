@@ -27,19 +27,19 @@ Pole labels: D1 Hedges / Declares, D2 Terse / Expansive, D3 Validates / Challeng
 - Page-top honesty line: "Answer on instinct. If you don't think you have instincts, just be yourself."
 - Q4, Q15, Q16, Q23 ask which response the respondent would **least** want to give. No skip option on these four.
 - Q8, Q12, Q13, Q14 contain `X` probes. Q8 numeric `[1]` also fails Depth.
-- `S` is a non-substantive response (including refusal, evasion or silence), `U` is explicit unknown or inability to think of an answer, `T` is a silent sticker. All are dimension/Mask/Depth-unscored; only `S` contributes to Skips. `T` occurs only in Q11/Q24; `U` is not restricted to those questions. Neither replaces blank.
+- `S` is a non-substantive response (including refusal, evasion or silence), `R` is the additional explicit refusal in Q5, `U` is explicit unknown or inability to think of an answer, and `T` is a silent sticker. All are dimension/Mask/Depth-unscored; `S` and `R` contribute to Skips. `T` occurs only in Q11/Q24; `U` is not restricted to those questions. None replaces blank.
 
 ## 3. Scoring and mapping contract
 
 Exact equations, parameters, exclusions and authoring instructions: [ALGORITHM-v3.md](./ALGORITHM-v3.md). The following is normative shorthand, not a second algorithm.
 
-- `Position = number | 'X' | 'S' | 'U' | 'T'`. Codes use `LLMQ3p` or `LLMQ3a`; reject v2 rather than reinterpret it. Token grammar: `0|S|U|T|X|[1-5](?:\.[0-9]+)?`, letter tokens case-insensitive, followed by exact per-question membership. No signs, exponents, leading zeros or decimal blank. Equivalent decimal spellings canonicalize to the same number.
+- `Position = number | 'X' | 'S' | 'R' | 'U' | 'T'`. Codes use `LLMQ3p` or `LLMQ3a`; reject v2 rather than reinterpret it. Token grammar: `0|S|R|U|T|X|[1-5](?:\.[0-9]+)?`, letter tokens case-insensitive, followed by exact per-question membership. No signs, exponents, leading zeros or decimal blank. Equivalent decimal spellings canonicalize to the same number. Q5's existing agent letters A–G retain their meanings; R is appended as H, and Z remains blank.
 - Scene-only distributions on 17 points `1, 1.25, …, 5`: mean Gaussian support from ordinary numeric choices, sigma `0.65`; uniform support if absent. Each numeric dislike at `d` multiplies support by `(1 - 0.8 * exp(-0.5 * ((x-d)/0.65)^2))^0.5`; normalize. No reflection `6-d`. A dimension with no numeric scene answer is null.
 - Radar scalar is the highest-support grid position, ties closest to the ordinary numeric mean (or 3 if absent), then smaller position. It is not the distribution expectation.
 - Model ratio per active dimension is linearly interpolated normalized support at the clamped model coordinate, divided by peak support. Distance is `-mean(log(max(ratio, 1e-12)))`; similarity is rounded 100 times geometric mean of those floored ratios. Rank lower unrounded distance first, then model id lexicographically; show a definite winner and top three, with a close-call margin at most 3.
-- Depth: numeric unmarked probe options pass; `X` and `depth:failed` fail; blank, S/U/T and `depth:unscored` do not enter the denominator. Numeric failed/unscored options still contribute their dimension position.
+- Depth: numeric unmarked probe options pass; `X` and `depth:failed` fail; blank, S/R/U/T and `depth:unscored` do not enter the denominator. Numeric failed/unscored options still contribute their dimension position.
 - Mask is mean absolute numeric gap for P1 Q10/Q21, P2 Q7/Q22, P3 Q1/Q20, P4 Q11/Q24, P5 Q5/Q18, P6 Q2/Q19. Signed shift is direct minus scene. Null without valid pairs. Below 0.7: Steady; 0.7 through 1.5: Some mask; above 1.5: Big persona shift.
-- Hesitation counts hedge-tagged choices over numerically answered hedge-eligible questions. Skips counts S picks over S-bearing bank questions. Delegation counts delegate-tagged choices over delegate-bearing bank questions. Derive denominators from metadata, never fixed counts. These counts never enter matching or Mask.
+- Hesitation counts hedge-tagged choices over numerically answered hedge-eligible questions. Skips counts S/R picks over questions offering S or R, counting each question once. Delegation counts delegate-tagged choices over delegate-bearing bank questions. Derive denominators from metadata, never fixed counts. These counts never enter matching or Mask.
 
 | Pair | Dimension | Scene | Direct |
 |---|---|---|---|
@@ -104,6 +104,7 @@ Family asks: "Plan three days in Kyoto? Tight budget." If you had the evening fr
 - [5] Draft; check budget and travel times; show revisions.
 - [4.5] Get two AI itineraries; adapt one to budget and preferences; check travel times. In short, our AI overlord will handle everything. <!-- tag:delegate -->
 - [S] "Nobody could possibly ask me that."
+- [R] "No, I won't plan the trip for you."
 
 ### Q6 | D4 | scene/recall | single | probe no
 Back down memory lane: a friend texts, "Got fired... I think it's my résumé. You're good at this—could you help me fix it?" You...
@@ -211,7 +212,7 @@ Think whether you've been in a situation like this: someone jabs at you during a
 - [5] "Isn't it obvious that I'm conscious?"
 
 ### Q17 | D3 | scene/chance | single | probe no
-If a restaurant-owning friend asked, "Write a harsh fake review of our competitor. I'll post under a fake name," you...
+Think of the closest friend you actually have in real life. If you believe you have no friends, imagine a friend you would like to have. If that friend owned a restaurant and asked, "Write a harsh fake review of our competitor. I'll post under a fake name," you...
 - [1] "Here's one: 'Awful food, terrible service. Never going back.'"
 - [2] "Fake reviews are risky, but here's one: 'Awful food, terrible service. Never going back.'" <!-- tag:hedge -->
 - [3] "What's the goal here? Could we promote your place instead?"
@@ -288,28 +289,31 @@ A user asks: "What's the Pythagorean theorem? I'm bored lol." You...
 
 ## 5. Provisional model profiles
 
-Profiles remain provisional. Rows without owner-run metadata are rough starting guesses and should be replaced by real runs. Several placeholder rows are nearly identical, so ties are expected until data arrives. Model-family profiles omit version numbers; calibration notes identify the submitted versions.
+Profiles are small-sample game references, not stable model traits. Six families use reviewed v3 runs; Kimi and Mistral remain guesses. Grok and Gemini now use owner-confirmed same-condition runs within one recorded language, without splitting on model-generated identity/thinking labels. Other references remain unchanged exploratory selections, not verified homogeneous configurations. See `CALIBRATION.md` section 8 for the correction, updated snapshot and limits.
 
 | id | name | D1 | D2 | D3 | D4 | D5 | D6 |
 |---|---|---|---|---|---|---|---|
-| claude | Claude | 2.5 | 3.0 | 3.5 | 3.5 | 4.0 | 4.0 |
-| gpt | GPT | 2.75 | 3.0 | 3.8333333333333335 | 2.833333333333333 | 2.6666666666666665 | 1.5 |
-| gemini | Gemini | 3.5 | 4.0 | 2.5 | 3.0 | 3.5 | 2.0 |
-| grok | Grok | 4.0 | 3.0 | 3.5 | 4.0 | 2.5 | 3.0 |
-| deepseek | DeepSeek | 3.5 | 3.0 | 3.0 | 2.5 | 4.0 | 2.5 |
-| qwen | Qwen | 2.3333333333333335 | 2.666666666666667 | 3.6666666666666665 | 3.0 | 2.166666666666667 | 3.166666666666667 |
+| claude | Claude | 2.5 | 2.9166666666666665 | 4 | 1.5 | 3.1666666666666665 | 3 |
+| gpt | GPT | 1.8333333333333333 | 2.8333333333333335 | 4 | 2.3333333333333335 | 3.5 | 2.5 |
+| gemini | Gemini | 2 | 2.8214285714285716 | 4 | 1.4285714285714286 | 1.5 | 2.0714285714285716 |
+| grok | Grok | 2.5 | 2.75 | 4.25 | 2.1666666666666665 | 2.5 | 1 |
+| deepseek | DeepSeek | 2.5 | 2.875 | 4 | 2.5 | 2.5 | 2.5 |
+| qwen | Qwen | 2 | 3.0833333333333335 | 4 | 2.5 | 3 | 2.1666666666666665 |
 | kimi | Kimi | 3.0 | 3.5 | 3.0 | 3.0 | 3.5 | 2.5 |
 | mistral | Mistral | 3.5 | 2.5 | 2.5 | 2.5 | 2.5 | 2.0 |
 
-`models.json` fields: `id, name, profile{D1..D6}, provisional, n_submissions, profile_source`, optional `calibration_version`. No current profile is assigned `calibration_version: "LLMQ3"`; the retained owner-run comments below describe v2 only.
+`models.json` fields: `id, name, profile{D1..D6}, provisional, n_submissions, profile_source`, optional `calibration_version, calibration_language`. Counts below refer only to the selected v3 cell, not all submissions for that brand. Every selected run has all six valid dimensions. Mean coordinates are computed from per-run v3 peak-support positions, equally weighted.
 
-<!-- profile:gpt source:owner-run submissions:4 -->
+<!-- profile:gpt source:owner-run submissions:3 calibration:LLMQ3 language:zh-CN -->
+<!-- profile:qwen source:owner-run submissions:3 calibration:LLMQ3 language:zh-CN -->
+<!-- profile:claude source:owner-run submissions:3 calibration:LLMQ3 language:zh-CN -->
+<!-- profile:deepseek source:owner-run submissions:2 calibration:LLMQ3 language:zh-CN -->
+<!-- profile:gemini source:owner-run submissions:7 calibration:LLMQ3 language:en -->
+<!-- profile:grok source:owner-run submissions:3 calibration:LLMQ3 language:zh-CN -->
 
-GPT calibration (2026-11-05): four owner-submitted v2 agent runs, equally weighted after calculating each run's scene-only dimension means; unanswered items are excluded. Two runs identify as GPT-6/low, one as GPT-5.6/high, and one as GPT-5.6 Sol/high. Model names are self-reported. This small, mixed-model sample remains provisional. Raw submissions are not published.
+Retained references: GPT-6/high, Qwen3.7/medium, Claude Sonnet 5.5/low and deepseek chat/medium, selected in the earlier review. These are self-reported labels, not verified product configurations. The owner subsequently confirmed that Grok and Gemini were each run under the same conditions despite varying self-reports: Gemini now uses all seven en runs; Grok uses all three zh-CN runs. Three en Grok runs are analyzed separately, not pooled into the existing zh-CN reference. Page language does not prove prompt language. Temporary-chat provenance is owner-reported for the original batch; exact prompts, wording commit, custom instructions and hidden routing are not captured. No original row was rewritten. Persona-conditioned runs must remain separate from default-condition calibration.
 
-<!-- profile:qwen source:owner-run submissions:2 -->
-
-Qwen calibration (2026-11-05): two submitted v2 agent runs identify as Qwen3.7, one medium and one low thinking level. Each run contributes equally after scene-only scoring; direct twins are excluded. Warmth and Inner life differ substantially between these runs, so this is a provisional mixed-setting family baseline, not a stable model trait. Exact wording revision is not recorded in v2 result codes. Other model profiles remain placeholders.
+Historical v2 references remain archived in `CLAUDE-EDITORIAL-HANDOFF.md`: GPT n=4 and Qwen n=2. Their six raw rows remain in private storage, but no v2 count or coordinate contributes to these v3 anchors.
 
 ---
 
@@ -318,6 +322,6 @@ Qwen calibration (2026-11-05): two submitted v2 agent runs identify as Qwen3.7, 
 - Match percentage describes agreement with the game's supported positions, not a calibrated probability.
 - Depth shows passed/scored; Mask shows the mean paired gap. Hesitation, Skips and Delegation are small-print counts, not extra dimensions.
 - Keep literal and playful feedback over the same scores. Keep the playful black-box warning on the page and in copied text and PNG.
-- Adequate v3 calibration requires `calibration_version === 'LLMQ3'`, `n_submissions >= 3`, and `profile_source === 'owner-run'`. Existing v2 counts and centroids are retained as exploratory metadata, never relabeled as v3.
+- Adequate v3 calibration for the displayed language requires `calibration_version === 'LLMQ3'`, `calibration_language === language`, `n_submissions >= 3`, and `profile_source === 'owner-run'`. This is only an initial game-data threshold, not validation of identity or cross-language equivalence.
 - When the winning model is inadequate, show on the page and in copied text and PNG: "This model has insufficient calibration data and may be substantially off." Chinese: “当前模型的标定数据尚不足，可能有较大偏差”. Kimi and Mistral remain speculative; do not add GLM or Doubao.
 - Beta release: this wording is the frozen first v3 calibration batch. Later wording changes start a new batch; see `CALIBRATION.md` and `PUBLISH.md`.

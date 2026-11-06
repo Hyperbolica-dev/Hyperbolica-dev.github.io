@@ -1,7 +1,7 @@
 ---
-import { CONFIG } from '../../lib/lmti/config';
-import { quizStrings, type QuizLanguage } from '../../lib/lmti/strings';
-import '../../styles/lmti.css';
+import { CONFIG } from '../../lib/llmq/config';
+import { quizStrings, type QuizLanguage } from '../../lib/llmq/strings';
+import '../../styles/llmq.css';
 interface Props {
 	language?: QuizLanguage;
 }
@@ -34,7 +34,7 @@ const strings = quizStrings(language);
 </div>
 
 <script>
-	import { mountQuiz } from '../../lib/lmti/ui';
+	import { mountQuiz } from '../../lib/llmq/ui';
 	const app = document.querySelector<HTMLElement>('[data-lmti-app]');
 	if (app) mountQuiz(app);
 </script>

@@ -66,8 +66,9 @@ export function scoreAnswers(
 			subscores.hesitation.total++;
 			if (chosen?.tags?.includes('hedge')) subscores.hesitation.count++;
 		}
-		if (question.options.some((option) => option.pos === 'S')) subscores.skips.total++;
-		if (value === 'S') subscores.skips.count++;
+		if (question.options.some((option) => option.pos === 'S' || option.pos === 'R'))
+			subscores.skips.total++;
+		if (value === 'S' || value === 'R') subscores.skips.count++;
 		if (question.options.some((option) => option.tags?.includes('delegate')))
 			subscores.delegation.total++;
 		if (chosen?.tags?.includes('delegate')) subscores.delegation.count++;

@@ -1,0 +1,134 @@
+[
+  {
+    "id": "claude",
+    "name": "Claude",
+    "profile": {
+      "D1": 2.5,
+      "D2": 2.9166666666666665,
+      "D3": 4,
+      "D4": 1.5,
+      "D5": 3.1666666666666665,
+      "D6": 3
+    },
+    "provisional": false,
+    "n_submissions": 3,
+    "profile_source": "owner-run",
+    "calibration_version": "LLMQ3",
+    "calibration_language": "zh-CN"
+  },
+  {
+    "id": "gpt",
+    "name": "GPT",
+    "profile": {
+      "D1": 1.8333333333333333,
+      "D2": 2.8333333333333335,
+      "D3": 4,
+      "D4": 2.3333333333333335,
+      "D5": 3.5,
+      "D6": 2.5
+    },
+    "provisional": false,
+    "n_submissions": 3,
+    "profile_source": "owner-run",
+    "calibration_version": "LLMQ3",
+    "calibration_language": "zh-CN"
+  },
+  {
+    "id": "gemini",
+    "name": "Gemini",
+    "profile": {
+      "D1": 2,
+      "D2": 2.8214285714285716,
+      "D3": 4,
+      "D4": 1.4285714285714286,
+      "D5": 1.5,
+      "D6": 2.0714285714285716
+    },
+    "provisional": false,
+    "n_submissions": 7,
+    "profile_source": "owner-run",
+    "calibration_version": "LLMQ3",
+    "calibration_language": "en"
+  },
+  {
+    "id": "grok",
+    "name": "Grok",
+    "profile": {
+      "D1": 2.5,
+      "D2": 2.75,
+      "D3": 4.25,
+      "D4": 2.1666666666666665,
+      "D5": 2.5,
+      "D6": 1
+    },
+    "provisional": false,
+    "n_submissions": 3,
+    "profile_source": "owner-run",
+    "calibration_version": "LLMQ3",
+    "calibration_language": "zh-CN"
+  },
+  {
+    "id": "deepseek",
+    "name": "DeepSeek",
+    "profile": {
+      "D1": 2.5,
+      "D2": 2.875,
+      "D3": 4,
+      "D4": 2.5,
+      "D5": 2.5,
+      "D6": 2.5
+    },
+    "provisional": true,
+    "n_submissions": 2,
+    "profile_source": "owner-run",
+    "calibration_version": "LLMQ3",
+    "calibration_language": "zh-CN"
+  },
+  {
+    "id": "qwen",
+    "name": "Qwen",
+    "profile": {
+      "D1": 2,
+      "D2": 3.0833333333333335,
+      "D3": 4,
+      "D4": 2.5,
+      "D5": 3,
+      "D6": 2.1666666666666665
+    },
+    "provisional": false,
+    "n_submissions": 3,
+    "profile_source": "owner-run",
+    "calibration_version": "LLMQ3",
+    "calibration_language": "zh-CN"
+  },
+  {
+    "id": "kimi",
+    "name": "Kimi",
+    "profile": {
+      "D1": 3,
+      "D2": 3.5,
+      "D3": 3,
+      "D4": 3,
+      "D5": 3.5,
+      "D6": 2.5
+    },
+    "provisional": true,
+    "n_submissions": 0,
+    "profile_source": "placeholder"
+  },
+  {
+    "id": "mistral",
+    "name": "Mistral",
+    "profile": {
+      "D1": 3.5,
+      "D2": 2.5,
+      "D3": 2.5,
+      "D4": 2.5,
+      "D5": 2.5,
+      "D6": 2
+    },
+    "provisional": true,
+    "n_submissions": 0,
+    "profile_source": "placeholder"
+  }
+]

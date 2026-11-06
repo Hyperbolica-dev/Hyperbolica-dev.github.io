@@ -76,8 +76,8 @@ export function decodeReply(text: string, bank: Bank): DecodeResult {
 			seen.add(q);
 			const question = bank.questions.find((question) => question.n === q);
 			let position: Position | undefined;
-			if (question && kind === 'p' && /^(?:0|[1-5](?:\.[0-9]+)?|X|S|U|T)$/.test(value)) {
-				const candidate: Position = /^[XSUT]$/.test(value) ? (value as Position) : Number(value);
+			if (question && kind === 'p' && /^(?:0|[1-5](?:\.[0-9]+)?|X|S|R|U|T)$/.test(value)) {
+				const candidate: Position = /^[XSRUT]$/.test(value) ? (value as Position) : Number(value);
 				if (candidate === 0 || question.options.some((option) => option.pos === candidate))
 					position = candidate;
 			}

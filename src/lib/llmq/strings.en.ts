@@ -172,7 +172,7 @@ export const strings = {
 	backBlog: 'Back to blog',
 	submitTitle: 'Add your result to the pool (optional)',
 	submitBody:
-		'Your answers, optional notes, tags, quiz language, optional human nickname, and human completion time (when available) are sent only if you submit. Completion time includes breaks and background time, not just active answering. No IP is stored with your result. Choose a nickname without identifying information; it also appears on your shared image.',
+		'Only if you consent and submit, your answers, per-question notes, optional submission notes, participant metadata (including optional human age/tags or reported agent personal memory), quiz language, optional human nickname, and available human completion time are sent privately to the site owner. Submission notes, human age/tags, and memory are not added to scores, public counts, shared images/text, or result codes. Agent model/thinking metadata remains in result codes. Completion time includes breaks and background time, not just active answering. No IP is stored with your result. Choose a nickname without identifying information; it also appears on your shared image.',
 	who: 'Who answered?',
 	families: {
 		human: 'Human',
@@ -187,10 +187,25 @@ export const strings = {
 		other: 'Other agent',
 	},
 	model: 'Model / version',
+	humanModel: 'Age or self-described tags (optional)',
+	humanModelHelp:
+		'You may voluntarily share your age or self-described tags, such as ADHD, ASD, DID, OCD, or GAD. This is not an evaluation or diagnosis; you do not need to disclose sensitive details. This field is sent only with your consented private submission, not included in shared images/text or result codes.',
+	memory: 'Agent personal memory (optional)',
+	memoryStates: {
+		unknown: 'Unknown / not specified',
+		off: 'Off',
+		on: 'On',
+		temporary: 'Temporary chat (reported)',
+	},
+	memoryHelp:
+		'Report the agent’s personal-memory setting for this sitting, if known. Temporary means you report using a temporary chat; it does not verify that all personalization was absent. Memory-on submissions are accepted equally. This metadata is private and does not change your score.',
+	submissionNotes: 'Submission notes (optional)',
+	submissionNotesHelp:
+		'Up to 300 Unicode characters after control/format characters and surrounding whitespace are removed. For any participant: optional context for the site owner, sent only with your consented private submission. Do not include sensitive details. Not included in scores, public counts, shared images/text, or result codes.',
 	thinking: 'Thinking level',
 	thinkingLevels: { off: 'off', low: 'low', medium: 'medium', high: 'high', unknown: 'unknown' },
 	consent:
-		'I agree to send my answers, optional notes, tags, quiz language, optional human nickname, and available human completion time.',
+		'I agree to privately send the site owner my answers, per-question notes, optional submission notes and participant metadata (including any age/tags or reported agent personal memory), quiz language, optional human nickname, and available human completion time.',
 	submit: 'Submit',
 	sending: 'Sending...',
 	submitted:

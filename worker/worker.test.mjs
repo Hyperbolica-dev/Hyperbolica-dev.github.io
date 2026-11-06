@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { webcrypto } from 'node:crypto';
 import { DatabaseSync } from 'node:sqlite';
 import { createWorker, SubmissionLedger } from './index.mjs';
-import bank from '../src/lib/lmti/data/questions.json' with { type: 'json' };
+import bank from '../src/lib/llmq/data/questions.json' with { type: 'json' };
 
 const ORIGIN = 'https://hyperbolica-dev.github.io';
 const code = (answers = {}) => `LLMQ${bank.version}p|who=human|think=unknown|${Array.from({ length: 24 }, (_, i) => `${i + 1}=${answers[i + 1] ?? 3}`).join(';')}`;
@@ -125,6 +125,16 @@ test('payload rejects invalid boundaries with a generic response and no writes',
   }
 });
 
+test('explicit refusal is stored only for questions offering that option', async () => {
+  const accepted = setup();
+  const answerCode = code({ 5: 'R' });
+  assert.equal((await accepted.send(payload({ code: answerCode }))).status, 200);
+  assert.equal(JSON.parse([...accepted.rows.values()][0].value).code, answerCode);
+  const rejected = setup();
+  assert.equal((await rejected.send(payload({ code: code({ 17: 'R' }) }))).status, 400);
+  assert.equal(rejected.writes.length, 0);
+});
+
 test('versioned fractional choices must belong to the question bank', async () => {
   for (const question of bank.questions) {
     for (const option of question.options.filter(({ pos }) => typeof pos === 'number' && !Number.isInteger(pos))) {
@@ -177,6 +187,109 @@ test('questionnaire language is validated, stored privately and part of retry id
     assert.equal((await s.send(payload({ language }))).status, 400);
     assert.equal(s.writes.length, 0);
   }
+});
+
+test('agent memory is optional, accepts exactly the declared states and persists in the private submission', async () => {
+  for (const memory of [undefined, 'unknown', 'off', 'on', 'temporary']) {
+    const s = setup();
+    const response = await s.send(payload({ mode: 'agent', who: 'human', memory, submissionNotes: 'private context' }));
+    assert.equal(response.status, 200);
+    assert.deepEqual(await response.json(), { ok: true });
+    const row = JSON.parse(s.writes[0].value);
+    assert.equal(row.memory, memory);
+    assert.equal(Object.hasOwn(row, 'memory'), memory !== undefined);
+    assert.equal(row.submissionNotes, 'private context');
+    assert.deepEqual(await (await s.send(null, { method: 'GET', path: '/counts' })).json(), { human: 0, agent: 1 });
+  }
+  for (const memory of ['', 'ON', ' on ', 'enabled', null, 0, true, {}, []]) {
+    const s = setup();
+    const response = await s.send(payload({ mode: 'agent', memory }));
+    assert.equal(response.status, 400, JSON.stringify(memory));
+    assert.deepEqual(await response.json(), { error: 'invalid' });
+    assert.equal(s.writes.length, 0);
+    assert.equal(s.ledgerCalls(), 0);
+  }
+});
+
+test('human memory is ignored regardless of value, provider or retry identity', async () => {
+  const s = setup();
+  const body = payload({ who: 'claude', submissionId: '12345678-1234-4234-8234-123456789abc' });
+  for (const memory of [undefined, 'unknown', 'off', 'on', 'temporary', 'invalid', null, 42, true, {}, []]) {
+    assert.equal((await s.send({ ...body, memory })).status, 200);
+  }
+  assert.equal(s.writes.length, 1);
+  assert.equal(Object.hasOwn(JSON.parse(s.writes[0].value), 'memory'), false);
+  assert.deepEqual(await (await s.send(null, { method: 'GET', path: '/counts' })).json(), { human: 1, agent: 0 });
+});
+
+test('submission notes normalize before the Unicode limit and omit empty values in both modes', async () => {
+  for (const mode of ['human', 'agent']) {
+    for (const [submissionNotes, expected] of [
+      [undefined, undefined], ['', undefined], [' \t\u0000\u007f\u200b\u202e\uFEFF\n ', undefined],
+      ['  private\u0000\u0085\u200b\u202e context\n ', 'private context'],
+      [` \t${'😀'.repeat(300)}\u200b\n `, '😀'.repeat(300)],
+      ['a'.repeat(299) + '\u0301', 'a'.repeat(299) + '\u0301'],
+    ]) {
+      const s = setup();
+      const response = await s.send(payload({ mode, submissionNotes }));
+      assert.equal(response.status, 200);
+      assert.deepEqual(await response.json(), { ok: true });
+      const row = JSON.parse(s.writes[0].value);
+      assert.equal(row.submissionNotes, expected);
+      assert.equal(Object.hasOwn(row, 'submissionNotes'), expected !== undefined);
+    }
+    for (const submissionNotes of [null, 42, true, {}, [], '😀'.repeat(301), 'a'.repeat(300) + '\u0301']) {
+      const s = setup();
+      const response = await s.send(payload({ mode, submissionNotes }));
+      assert.equal(response.status, 400, JSON.stringify({ mode, submissionNotes }));
+      assert.deepEqual(await response.json(), { error: 'invalid' });
+      assert.equal(s.writes.length, 0);
+      assert.equal(s.ledgerCalls(), 0);
+    }
+  }
+});
+
+test('sanitized memory and submission notes participate in UUID conflicts and legacy deduplication', async () => {
+  for (const mode of ['human', 'agent']) {
+    for (const submissionId of [undefined, '12345678-1234-4234-8234-123456789abc']) {
+      const s = setup();
+      const body = payload({ mode, submissionId, ...(mode === 'agent' ? { memory: 'on' } : {}), submissionNotes: ' private\u0000\u200b context ' });
+      assert.equal((await s.send(body)).status, 200);
+      assert.equal((await s.send({ ...body, submissionNotes: 'private context' })).status, 200);
+      assert.equal(s.writes.length, 1);
+      const changes = [{ ...body, submissionNotes: 'changed' }, { ...body, submissionNotes: undefined }];
+      if (mode === 'agent') changes.push({ ...body, memory: 'off' }, { ...body, memory: undefined });
+      for (const changed of changes) assert.equal((await s.send(changed)).status, submissionId ? 409 : 200);
+      const expectedCount = submissionId ? 1 : 1 + changes.length;
+      assert.equal(s.writes.length, expectedCount);
+      assert.deepEqual(await (await s.send(null, { method: 'GET', path: '/counts' })).json(),
+        { human: mode === 'human' ? expectedCount : 0, agent: mode === 'agent' ? expectedCount : 0 });
+    }
+  }
+});
+
+test('normalized empty submission notes deduplicate with omitted notes', async () => {
+  for (const mode of ['human', 'agent']) {
+    for (const submissionId of [undefined, '12345678-1234-4234-8234-123456789abc']) {
+      const s = setup();
+      const body = payload({ mode, submissionId });
+      assert.equal((await s.send(body)).status, 200);
+      assert.equal((await s.send({ ...body, submissionNotes: ' \u0000\u200b\n ' })).status, 200);
+      assert.equal(s.writes.length, 1);
+      assert.equal(Object.hasOwn(JSON.parse(s.writes[0].value), 'submissionNotes'), false);
+    }
+  }
+});
+
+test('metadata remains subject to the complete request byte cap before normalization', async () => {
+  const base = JSON.stringify(payload({ mode: 'agent', memory: 'on', submissionNotes: '😀'.repeat(300) }));
+  const byteLength = new TextEncoder().encode(base).byteLength;
+  assert.equal((await setup().send(null, { raw: base + ' '.repeat(4096 - byteLength) })).status, 200);
+  const s = setup();
+  assert.equal((await s.send(null, { raw: base + ' '.repeat(4097 - byteLength) })).status, 400);
+  assert.equal((await s.send(payload({ submissionNotes: ' '.repeat(4096) }))).status, 400);
+  assert.equal(s.writes.length, 0);
+  assert.equal(s.ledgerCalls(), 0);
 });
 
 test('human duration is optional, bounded and stored privately without client timestamps', async () => {
@@ -256,9 +369,9 @@ test('native rate limit precedes body reads and storage, without persisting IP i
 
 test('stats require the secret, paginate only submissions and disclose counts only', async () => {
   const s = setup();
-  await s.send();
+  await s.send(payload({ submissionNotes: 'private human context' }));
   s.advance(60_000);
-  await s.send(payload({ who: 'claude' }));
+  await s.send(payload({ mode: 'agent', who: 'claude', memory: 'on', submissionNotes: 'private agent context' }));
   for (const path of ['/stats', '/stats?token=wrong']) {
     assert.equal((await s.send(null, { method: 'GET', path, origin: null })).status, 401);
   }
@@ -316,7 +429,7 @@ test('public counts use mode, include bootstrap, expose fixed aggregate fields a
   assert.equal((await s.send(seed, { path: '/admin/bootstrap', origin: null })).status, 401);
   assert.equal((await bootstrap()).status, 200);
   assert.equal((await bootstrap()).status, 409);
-  await s.send(payload({ mode: 'agent', who: 'human', nickname: 'never public' }));
+  await s.send(payload({ mode: 'agent', who: 'human', nickname: 'never public', memory: 'on', submissionNotes: 'private context' }));
   const response = await s.send(null, { method: 'GET', path: '/counts?random=1', origin: null });
   assert.deepEqual(await response.json(), { human: 12, agent: 5 });
   assert.equal(response.headers.get('Cache-Control'), 'public, max-age=60');

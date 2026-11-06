@@ -21,6 +21,7 @@ import {
 const models = modelData as Model[];
 type Think = keyof QuizStrings['thinkingLevels'];
 type Who = keyof QuizStrings['families'];
+type Memory = keyof QuizStrings['memoryStates'];
 type Session = {
 	seed: number;
 	answers: Answers;
@@ -132,6 +133,8 @@ export function mountQuiz(app: HTMLElement) {
 	let model = 'unknown';
 	let think: Think = 'unknown';
 	let who: Who = 'human';
+	let memory: Memory = 'unknown';
+	let submissionNotes = '';
 	let view: 'landing' | 'quiz' | 'result' = 'landing';
 	let dryRun = false;
 	let submitted = false;
@@ -270,6 +273,8 @@ export function mountQuiz(app: HTMLElement) {
 		model = result.model;
 		think = result.think;
 		who = inferWho(model);
+		memory = 'unknown';
+		submissionNotes = '';
 		submitted = false;
 		submissionIds.clear();
 		renderResult();
@@ -348,6 +353,8 @@ export function mountQuiz(app: HTMLElement) {
 		think = 'unknown';
 		answers = {};
 		notes = {};
+		memory = 'unknown';
+		submissionNotes = '';
 		submitted = false;
 		submissionIds.clear();
 		seed = overrideSeed ?? randomSeed();
@@ -464,6 +471,7 @@ export function mountQuiz(app: HTMLElement) {
 		return (
 			!winner ||
 			winner.calibration_version !== 'LLMQ3' ||
+			winner.calibration_language !== language ||
 			winner.profile_source !== 'owner-run' ||
 			!(winner.n_submissions >= 3)
 		);
@@ -867,7 +875,7 @@ export function mountQuiz(app: HTMLElement) {
 					}),
 					'lmti-who',
 				),
-				field(s.model, modelInput, 'lmti-model'),
+				field(mode === 'human' ? s.humanModel : s.model, modelInput, 'lmti-model'),
 				field(
 					s.thinking,
 					select(s.thinkingLevels, think, (value) => {
@@ -877,6 +885,20 @@ export function mountQuiz(app: HTMLElement) {
 					'lmti-think',
 				),
 			);
+			if (mode === 'human') {
+				const help = el('p', 'lmti-muted', s.humanModelHelp);
+				help.id = 'lmti-human-model-help';
+				modelInput.setAttribute('aria-describedby', help.id);
+				metadata.append(help);
+			} else {
+				const memoryInput = select(s.memoryStates, memory, (value) => {
+					memory = value;
+				});
+				const help = el('p', 'lmti-muted', s.memoryHelp);
+				help.id = 'lmti-memory-help';
+				memoryInput.setAttribute('aria-describedby', help.id);
+				metadata.append(field(s.memory, memoryInput, 'lmti-memory'), help);
+			}
 			screen.append(metadata);
 		}
 		if (CONFIG.SUBMIT_ENDPOINT && !dryRun && enough) renderSubmit();
@@ -886,6 +908,8 @@ export function mountQuiz(app: HTMLElement) {
 				clearSession();
 				answers = {};
 				notes = {};
+				memory = 'unknown';
+				submissionNotes = '';
 				submitted = false;
 				submissionIds.clear();
 				renderLanding();
@@ -906,6 +930,31 @@ export function mountQuiz(app: HTMLElement) {
 		}
 		panel.append(el('h3', '', s.submitTitle), el('p', '', s.submitBody));
 		const form = el('form');
+		const note = el('textarea', 'lmti-textarea');
+		note.rows = 3;
+		note.value = submissionNotes;
+		note.setAttribute('aria-describedby', 'lmti-submission-notes-help lmti-submission-notes-count');
+		const noteHelp = el('p', 'lmti-muted', s.submissionNotesHelp);
+		noteHelp.id = 'lmti-submission-notes-help';
+		const noteCount = el(
+			'p',
+			'lmti-muted',
+			text(s.noteCount, { n: Array.from(submissionNotes.trim()).length }),
+		);
+		noteCount.id = 'lmti-submission-notes-count';
+		note.addEventListener('input', () => {
+			// Keep a trailing space while typing; normalize it away in the payload.
+			note.value = Array.from(note.value.replace(/[\p{Cc}\p{Cf}]/gu, '').trimStart())
+				.slice(0, 300)
+				.join('');
+			submissionNotes = note.value;
+			noteCount.textContent = text(s.noteCount, { n: Array.from(submissionNotes.trim()).length });
+		});
+		note.addEventListener('blur', () => {
+			submissionNotes = submissionNotes.trim();
+			note.value = submissionNotes;
+		});
+		form.append(field(s.submissionNotes, note, 'lmti-submission-notes'), noteHelp, noteCount);
 		const hp = el('input');
 		hp.name = 'hp';
 		hp.tabIndex = -1;
@@ -941,6 +990,8 @@ export function mountQuiz(app: HTMLElement) {
 				who,
 				model,
 				think,
+				...(mode === 'agent' ? { memory } : {}),
+				...(submissionNotes.trim() ? { submissionNotes: submissionNotes.trim() } : {}),
 				...(mode === 'human' && nickname ? { nickname } : {}),
 				...(durationMs !== undefined ? { durationMs } : {}),
 				fb:
@@ -1015,6 +1066,8 @@ export function mountQuiz(app: HTMLElement) {
 					model = 'unknown';
 					think = 'unknown';
 					notes = {};
+					memory = 'unknown';
+					submissionNotes = '';
 					submitted = false;
 					submissionIds.clear();
 					answers = {};

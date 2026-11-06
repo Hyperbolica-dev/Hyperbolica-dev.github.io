@@ -1,6 +1,6 @@
 import { readFile, writeFile, mkdir } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
-import { shuffleOptions } from '../src/lib/lmti/shuffle.ts';
+import { shuffleOptions } from '../src/lib/llmq/shuffle.ts';
 import { validateQuestions, validateModels } from './validate-questions.mjs';
 
 function parseQuestions(markdown, assignOrder = true) {
@@ -9,7 +9,7 @@ function parseQuestions(markdown, assignOrder = true) {
     const firstOption = body.indexOf('\n- [');
     if (firstOption < 0) throw new Error(`Missing options for Q${m[1]}`);
     const options = body.slice(firstOption + 1).split('\n').filter(line => line.trim()).map(line => {
-      const option = /^- \[([1-5](?:\.[0-9]+)?|X|S|U|T)\] (.+)$/.exec(line);
+      const option = /^- \[([1-5](?:\.[0-9]+)?|X|S|R|U|T)\] (.+)$/.exec(line);
       if (!option) throw new Error(`Invalid option on Q${m[1]}: ${line}`);
       const metadata = {};
       const text = option[2].replace(/ <!-- ([^>]+) -->/g, (_, annotation) => {
@@ -22,10 +22,15 @@ function parseQuestions(markdown, assignOrder = true) {
         return '';
       });
       if (!text.trim() || /<!--|-->/.test(text)) throw new Error(`Invalid option text on Q${m[1]}`);
-      return { pos: /^[XSUT]$/.test(option[1]) ? option[1] : Number(option[1]), text, ...metadata };
+      return { pos: /^[XSRUT]$/.test(option[1]) ? option[1] : Number(option[1]), text, ...metadata };
     });
     const question = { id: `q${m[1]}`, n: Number(m[1]), dim: m[2], frame: m[3], ...(m[9] ? { kind: m[9] } : {}), cue: m[4], role: m[7] ?? 'single', pair: m[6] ?? null, probe: m[8] === 'YES', stem: body.slice(0, firstOption), options, agent_order: [] };
-    if (assignOrder) question.agent_order = shuffleOptions(question, 20261105).map(option => option.pos);
+    if (assignOrder) {
+      // R extends v3 after its initial release: append its agent letter without
+      // reassigning any existing letters. Human display order still shuffles all options.
+      const original = { ...question, options: options.filter(option => option.pos !== 'R') };
+      question.agent_order = [...shuffleOptions(original, 20261105).map(option => option.pos), ...options.filter(option => option.pos === 'R').map(option => option.pos)];
+    }
     return question;
   });
   if ([...markdown.matchAll(/^### /gm)].length !== questions.length) throw new Error('Malformed question header');
@@ -43,13 +48,14 @@ export function parseQuestionnaire(markdown) {
   const models = [...markdown.matchAll(/^\| ([a-z]+) \| ([^|]+) \| ((?:[\d.]+ \| ){5}[\d.]+) \|$/gm)].map(m => ({
     id: m[1], name: m[2].trim(), profile: Object.fromEntries(m[3].split(' | ').map((value, i) => [`D${i + 1}`, Number(value)])), provisional: true, n_submissions: 0, profile_source: 'placeholder',
   }));
-  for (const match of markdown.matchAll(/<!-- profile:([a-z]+) source:(owner-run|measured) submissions:(\d+)(?: calibration:([A-Za-z0-9-]+))? -->/g)) {
+  for (const match of markdown.matchAll(/<!-- profile:([a-z]+) source:(owner-run|measured) submissions:(\d+)(?: calibration:([A-Za-z0-9-]+))?(?: language:(en|zh-CN))? -->/g)) {
     const model = models.find(model => model.id === match[1]);
     if (!model) throw new Error(`Unknown calibrated model: ${match[1]}`);
     model.profile_source = match[2];
     model.n_submissions = Number(match[3]);
     if (match[4]) model.calibration_version = match[4];
-    model.provisional = !(model.calibration_version === 'LLMQ3' && model.n_submissions >= 3 && model.profile_source === 'owner-run');
+    if (match[5]) model.calibration_language = match[5];
+    model.provisional = !(model.calibration_version === 'LLMQ3' && model.calibration_language && model.n_submissions >= 3 && model.profile_source === 'owner-run');
   }
   const version = /^# Questionnaire v(\d+):/m.exec(markdown);
   const bank = { version: Number(version?.[1]), dimensions, pairs, questions };
@@ -85,11 +91,11 @@ export function parseChineseQuestionnaire(markdown, englishBank) {
 }
 
 export async function buildQuestions() {
-  const source = await readFile(new URL('../docs/lmti/01-questionnaire.md', import.meta.url), 'utf8');
+  const source = await readFile(new URL('../docs/llmq/01-questionnaire.md', import.meta.url), 'utf8');
   const { bank, models } = parseQuestionnaire(source);
-  const chineseSource = await readFile(new URL('../docs/lmti/QUESTIONNAIRE-v3.zh-CN.md', import.meta.url), 'utf8');
+  const chineseSource = await readFile(new URL('../docs/llmq/QUESTIONNAIRE-v3.zh-CN.md', import.meta.url), 'utf8');
   const chineseBank = parseChineseQuestionnaire(chineseSource, bank);
-  const target = new URL('../src/lib/lmti/data/', import.meta.url);
+  const target = new URL('../src/lib/llmq/data/', import.meta.url);
   await mkdir(target, { recursive: true });
   await writeFile(new URL('questions.json', target), `${JSON.stringify(bank, null, 2)}\n`);
   await writeFile(new URL('questions.zh-CN.json', target), `${JSON.stringify(chineseBank, null, 2)}\n`);

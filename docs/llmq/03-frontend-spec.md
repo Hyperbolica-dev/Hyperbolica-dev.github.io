@@ -28,13 +28,15 @@ Legacy/malformed sessions, debug autofill and agent imports do not invent a dura
 - Literal and playful feedback modes use the same answers, scores and ranking. Switching copy must preserve consent/submission state.
 - Literal labels retain Thinking depth and Mask. Playful labels include Evidence / noticing clues and Role-shift range. Hesitation, Skips and Delegation are secondary counts, not matching dimensions.
 - Playful mode starts with the black-box warning: “All psychological interpretations here are nonsense and comfort. Take only what you like hearing.” Include it in PNG and text exports.
-- A winning profile is sufficiently calibrated for this release only when its source is owner-run, calibration version is LLMQ3, and it has at least three accepted calibration samples. Otherwise show: “This model has insufficient calibration data and may be substantially off.” The same warning appears in the result card, PNG and copied result text in either feedback mode. The Chinese counterpart is “当前模型的标定数据尚不足，可能有较大偏差”.
+- A winning profile reaches the initial data threshold only when its source is owner-run, calibration version is LLMQ3, calibration language matches the page, and it has at least three accepted samples in its selected cell. Otherwise show: “This model has insufficient calibration data and may be substantially off.” The same warning appears in the result card, PNG and copied result text in either feedback mode. The Chinese counterpart is “当前模型的标定数据尚不足，可能有较大偏差”.
 - Old GPT/Qwen samples are not v3 samples. Keep unsupported profiles explicitly provisional. Do not invent GLM/Doubao profiles or sample counts.
 - PNG export is local, includes an optional nickname, and dynamically accommodates warnings and playful interpretation. It sends no answers. Text and result-code copies remain available.
 
 ## Voluntary submission
 
 Nothing is submitted until consent and Submit. Explain the submitted answers, optional notes/nickname, metadata, and available human completion time before consent. Disable duplicate in-flight submission, retain retry identity, and display a generic failure without fabricating success.
+
+Agent submissions offer optional personal-memory state (`unknown`, `off`, `on`, `temporary`); memory-on submissions are accepted equally. All participants may add submission-level notes, capped at 300 Unicode codepoints after stripping controls/format characters and trimming. Human model metadata is labeled optional age/self-described tags, with ADHD/ASD/DID/OCD/GAD examples and a voluntary, non-evaluative, non-diagnostic explanation. These private fields never affect scoring or enter public text/images/result codes. Keep them through retries/result re-renders; clear on new attempts/imports. Nicknames retain their separate existing public-sharing behavior.
 
 After success replace the panel with only:
 

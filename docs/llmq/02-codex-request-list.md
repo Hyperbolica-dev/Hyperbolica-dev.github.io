@@ -2,7 +2,7 @@
 
 You are working in the repository of my personal blog (a static site hosted on GitHub). Add a quiz as an **independent, additive section** of the site. The existing site must look, build, and behave exactly as before.
 
-Read these three files first; they are in `docs/lmti/` (create the folder and copy them in):
+Read these three files first; they are in `docs/llmq/` (create the folder and copy them in):
 1. `01-questionnaire.md`: the question bank, scoring spec, placeholder model profiles, result copy. **Single source of truth.**
 2. `02-codex-request-list.md`: this file.
 3. `03-frontend-spec.md`: screens, components, copy, accessibility, edge cases.
@@ -24,7 +24,7 @@ Working branch: `lmti-quiz`. Small commits. Do not touch unrelated files.
 
 ## Phase 0: investigate before changing anything
 
-Write `docs/lmti/integration-notes.md` (max 1 page) answering:
+Write `docs/llmq/integration-notes.md` (max 1 page) answering:
 1. Static site generator or plain HTML? Version, build command, output folder, deploy method (GitHub Pages branch or Action).
 2. Where do pages live, how are routes made, and how do I add a standalone page with its own JS/CSS without touching existing pages?
 3. Layout/head/footer partials, theme mechanism (CSS variables, dark-mode toggle or media query), font stack, and the nav/menu source.
@@ -42,7 +42,7 @@ Then proceed unless a "stop and ask" condition (end of this file) applies.
 - Suggested layout (adapt to the generator):
   ```
   <route>/index.*            page
-  <route>/assets/lmti.css    scoped styles (all selectors prefixed .lmti-)
+  <route>/assets/llmq.css    scoped styles (all selectors prefixed .lmti-)
   <route>/assets/*.js        modules: config, data, shuffle, scoring, agent, ui, submit, debug
   <route>/data/questions.json
   <route>/data/models.json
@@ -50,7 +50,7 @@ Then proceed unless a "stop and ask" condition (end of this file) applies.
   scripts/validate-questions.mjs   structural checks (below)
   tests/scoring.test.mjs
   worker/                    Cloudflare Worker (Phase 5)
-  docs/lmti/
+  docs/llmq/
   ```
 - One config module `config.js`:
   ```js
@@ -126,7 +126,7 @@ Worker behavior:
 
 - **Preview mode (`PUBLISHED: false`):** page has `<meta name="robots" content="noindex,nofollow">`, a small "Preview, not published" ribbon, no nav link, excluded from sitemap/feed/search. Reachable only by direct URL.
 - **Debug mode (`DEBUG_ENABLED: true`):** `?debug=1` enables the debug panel (spec in `03-frontend-spec.md`): internal scores, answer positions, probe results, pair shifts, distance to every model, JSON export, autofill buttons, fixed-seed shuffle (`?seed=...`), and a dry-run toggle that blocks Submit.
-- **Publish checklist in the README (`docs/lmti/PUBLISH.md`):** flip `PUBLISHED` to true, flip `DEBUG_ENABLED` to false, set `SUBMIT_ENDPOINT`, add the nav link, add to the sitemap, remove the ribbon, re-run validation and tests. Note honestly that the question-to-position mapping ships in the JS and is readable by a determined person; that is acceptable for this project.
+- **Publish checklist in the README (`docs/llmq/PUBLISH.md`):** flip `PUBLISHED` to true, flip `DEBUG_ENABLED` to false, set `SUBMIT_ENDPOINT`, add the nav link, add to the sitemap, remove the ribbon, re-run validation and tests. Note honestly that the question-to-position mapping ships in the JS and is readable by a determined person; that is acceptable for this project.
 
 ---
 

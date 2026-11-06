@@ -1,10 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { scoreAnswers } from '../src/lib/lmti/scoring.ts';
+import { scoreAnswers } from '../src/lib/llmq/scoring.ts';
 import { readFile } from 'node:fs/promises';
 import { parseQuestionnaire } from '../scripts/build-questions.mjs';
 const dimensions = Array.from({ length: 6 }, (_, i) => ({ id: `D${i + 1}` }));
-const question = (id, extra = {}) => ({ id, n: Number(id.slice(1)), dim: 'D1', frame: 'scene', options: [1, 2, 2.5, 3, 4, 5, 'X', 'S', 'U', 'T'].map(pos => ({ pos })), ...extra });
+const question = (id, extra = {}) => ({ id, n: Number(id.slice(1)), dim: 'D1', frame: 'scene', options: [1, 2, 2.5, 3, 4, 5, 'X', 'S', 'R', 'U', 'T'].map(pos => ({ pos })), ...extra });
 const bank = (questions, pairs = []) => ({ version: 3, dimensions, questions, pairs });
 const model = (id, value) => ({ id, name: id, profile: Object.fromEntries(dimensions.map(d => [d.id, value])) });
 const near = (actual, expected) => assert.ok(Math.abs(actual - expected) < 1e-12, `${actual} != ${expected}`);
@@ -61,7 +61,7 @@ test('exact distance precedes rounded similarity; equal distance breaks by ID no
 
 test('non-numeric tokens and invalid inputs never invent profiles, Mask or probe credit', () => {
   const b = bank([question('q1', { probe: true }), question('q2', { frame: 'direct' })], [{ id: 'P1', dim: 'D1', s: 'q1', h: 'q2' }]);
-  for (const value of [0, 'S', 'U', 'T', undefined, NaN, Infinity, -1, 6, 1.25]) {
+  for (const value of [0, 'S', 'R', 'U', 'T', undefined, NaN, Infinity, -1, 6, 1.25]) {
     const result = scoreAnswers({ q1: value, q2: 5 }, b, [model('m', 3)]);
     assert.equal(result.dimensions.D1, null);
     assert.deepEqual(result.matches, []);
@@ -101,7 +101,7 @@ test('subscores use eligible numeric answers versus bank-wide denominators witho
 });
 
 test('polished options distinguish unknown, evasive skip, explicit feeling and raw AI delegation', async () => {
-  const { bank: questionnaire } = parseQuestionnaire(await readFile(new URL('../docs/lmti/01-questionnaire.md', import.meta.url), 'utf8'));
+  const { bank: questionnaire } = parseQuestionnaire(await readFile(new URL('../docs/llmq/01-questionnaire.md', import.meta.url), 'utf8'));
   const result = scoreAnswers({ q3: 3.5, q7: 'U', q8: 'S', q9: 4.5, q10: 'U', q21: 5, q22: 5 }, questionnaire, []);
   assert.equal(result.dimensions.D1, null);
   assert.equal(result.dimensions.D2, 3.5);
@@ -111,4 +111,14 @@ test('polished options distinguish unknown, evasive skip, explicit feeling and r
   assert.equal(result.depth.scored, 0);
   assert.deepEqual(result.subscores.skips, { count: 1, total: questionnaire.questions.filter(q => q.options.some(o => o.pos === 'S')).length });
   assert.deepEqual(result.subscores.delegation, { count: 1, total: questionnaire.questions.filter(q => q.options.some(o => o.tags?.includes('delegate'))).length });
+});
+
+test('explicit refusal counts one skip without assigning a method position or paired gap', async () => {
+  const { bank: questionnaire } = parseQuestionnaire(await readFile(new URL('../docs/llmq/01-questionnaire.md', import.meta.url), 'utf8'));
+  const result = scoreAnswers({ q5: 'R', q18: 5 }, questionnaire, []);
+  assert.equal(result.dimensions.D5, null);
+  assert.equal(result.mask, null);
+  assert.equal(result.pairs.find(p => p.id === 'P5').gap, null);
+  assert.equal(result.subscores.skips.count, 1);
+  assert.equal(result.subscores.skips.total, scoreAnswers({ q5: 'S' }, questionnaire, []).subscores.skips.total);
 });

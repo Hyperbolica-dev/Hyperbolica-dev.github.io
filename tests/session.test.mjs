@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { finishHumanTiming, humanDurationMs, restoreHumanTiming } from '../src/lib/lmti/session.ts';
+import { finishHumanTiming, humanDurationMs, restoreHumanTiming } from '../src/lib/llmq/session.ts';
 
 const start = 1_000_000;
 const week = 7 * 24 * 60 * 60 * 1000;
