@@ -78,16 +78,16 @@
     "id": "qwen",
     "name": "Qwen",
     "profile": {
-      "D1": 3.5,
-      "D2": 3.5,
-      "D3": 2.5,
+      "D1": 2.3333333333333335,
+      "D2": 2.666666666666667,
+      "D3": 3.6666666666666665,
       "D4": 3,
-      "D5": 3.5,
-      "D6": 2
+      "D5": 2.166666666666667,
+      "D6": 3.166666666666667
     },
     "provisional": true,
-    "n_submissions": 0,
-    "profile_source": "placeholder"
+    "n_submissions": 2,
+    "profile_source": "owner-run"
   },
   {
     "id": "kimi",

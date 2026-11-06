@@ -20,7 +20,7 @@ export function encodeResult(
 	const who = clean(metadata.who, 40) || 'other';
 	const think = Object.hasOwn(levels, metadata.think) ? metadata.think : 'unknown';
 	const model = metadata.model ? clean(metadata.model, 40) : '';
-	return `LLMQ2p|who=${who}|think=${think}${model ? `|model=${model}` : ''}|${Array.from({ length: 24 }, (_, i) => `${i + 1}=${answers[`q${i + 1}`] ?? 0}`).join(';')}`;
+	return `LLMQ3p|who=${who}|think=${think}${model ? `|model=${model}` : ''}|${Array.from({ length: 24 }, (_, i) => `${i + 1}=${answers[`q${i + 1}`] ?? 0}`).join(';')}`;
 }
 
 export function decodeReply(text: string, bank: Bank): DecodeResult {
@@ -33,7 +33,7 @@ export function decodeReply(text: string, bank: Bank): DecodeResult {
 	const prefixes = [...text.matchAll(/LLMQ\d+[ap]?/gi)];
 	if (!prefixes.length) return fail('format');
 	const first = prefixes[0];
-	if (bank.version !== 2 || !/^LLMQ2[ap]$/i.test(first[0])) return fail('version');
+	if (bank.version !== 3 || !/^LLMQ3[ap]$/i.test(first[0])) return fail('version');
 	const kind = first[0].slice(-1).toLowerCase();
 	const remainder = text.slice(first.index! + first[0].length, prefixes[1]?.index);
 	const lines = remainder.replace(/\r/g, '').split('\n');
@@ -76,8 +76,8 @@ export function decodeReply(text: string, bank: Bank): DecodeResult {
 			seen.add(q);
 			const question = bank.questions.find((question) => question.n === q);
 			let position: Position | undefined;
-			if (question && kind === 'p' && /^(?:0|[1-5](?:\.[0-9]+)?|X)$/.test(value)) {
-				const candidate = value === 'X' ? 'X' : (Number(value) as Position);
+			if (question && kind === 'p' && /^(?:0|[1-5](?:\.[0-9]+)?|X|S|U|T)$/.test(value)) {
+				const candidate: Position = /^[XSUT]$/.test(value) ? (value as Position) : Number(value);
 				if (candidate === 0 || question.options.some((option) => option.pos === candidate))
 					position = candidate;
 			}

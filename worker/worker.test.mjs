@@ -135,6 +135,16 @@ test('versioned fractional choices must belong to the question bank', async () =
   assert.equal((await setup().send(payload({ v: 1, code: code().replace(`LLMQ${bank.version}p`, 'LLMQ1p') }))).status, 400);
 });
 
+test('v3 non-answer choices retain per-question membership and reject old codes', async () => {
+  for (const token of ['S', 'U', 'T']) {
+    assert.equal((await setup().send(payload({ code: code({ 11: token }) }))).status, 200);
+    assert.equal((await setup().send(payload({ code: code({ 4: token }) }))).status, 400);
+  }
+  assert.equal((await setup().send(payload({ code: code({ 1: 'U' }) }))).status, 400);
+  assert.equal((await setup().send(payload({ code: code({ 24: 'T' }) }))).status, 200);
+  assert.equal((await setup().send(payload({ v: 2, code: code().replace('LLMQ3p', 'LLMQ2p') }))).status, 400);
+});
+
 test('valid enums, blank/probe choices, Unicode limits and sanitized model persist only the contract', async () => {
   for (const who of ['human', 'claude', 'gpt', 'gemini', 'grok', 'deepseek', 'qwen', 'kimi', 'mistral', 'other']) {
     const s = setup();
@@ -151,6 +161,78 @@ test('valid enums, blank/probe choices, Unicode limits and sanitized model persi
   for (const think of ['off', 'low', 'medium', 'high', 'unknown']) assert.equal((await setup().send(payload({ think }))).status, 200);
   const s = setup();
   assert.equal((await s.send(payload({ fb: Array.from({ length: 24 }, (_, i) => ({ q: i + 1, text: '' })) }))).status, 200);
+});
+
+test('questionnaire language is validated, stored privately and part of retry identity', async () => {
+  for (const language of ['en', 'zh-CN']) {
+    const s = setup();
+    const body = payload({ language, submissionId: '12345678-1234-4234-8234-123456789abc' });
+    assert.equal((await s.send(body)).status, 200);
+    assert.equal(JSON.parse(s.writes[0].value).language, language);
+    assert.equal((await s.send({ ...body, language: language === 'en' ? 'zh-CN' : 'en' })).status, 409);
+    assert.deepEqual(await (await s.send(null, { method: 'GET', path: '/counts' })).json(), { human: 1, agent: 0 });
+  }
+  for (const language of ['', 'zh', 'fr', null, 1, {}]) {
+    const s = setup();
+    assert.equal((await s.send(payload({ language }))).status, 400);
+    assert.equal(s.writes.length, 0);
+  }
+});
+
+test('human duration is optional, bounded and stored privately without client timestamps', async () => {
+  for (const durationMs of [undefined, 0, 1, 123_456, 604_799_999, 604_800_000]) {
+    const s = setup();
+    const body = payload({ durationMs, startedAt: 1, completedAt: 2 });
+    const response = await s.send(body);
+    assert.equal(response.status, 200);
+    assert.deepEqual(await response.json(), { ok: true });
+    const row = JSON.parse(s.writes[0].value);
+    assert.equal(row.durationMs, durationMs);
+    assert.equal(Object.hasOwn(row, 'durationMs'), durationMs !== undefined);
+    assert.equal(Object.hasOwn(row, 'startedAt'), false);
+    assert.equal(Object.hasOwn(row, 'completedAt'), false);
+    const counts = await s.send(null, { method: 'GET', path: '/counts' });
+    assert.deepEqual(await counts.json(), { human: 1, agent: 0 });
+  }
+});
+
+test('human duration rejects malformed and out-of-bounds values before storage', async () => {
+  for (const durationMs of [-1, 0.5, 604_800_001, Number.MAX_SAFE_INTEGER + 1, NaN, Infinity, -Infinity, null, '1000', true, {}, []]) {
+    const s = setup();
+    const response = await s.send(payload({ durationMs }));
+    assert.equal(response.status, 400, String(durationMs));
+    assert.deepEqual(await response.json(), { error: 'invalid' });
+    assert.equal(s.writes.length, 0);
+    assert.equal(s.ledgerCalls(), 0);
+  }
+  // JSON numeric overflow reaches validation as Infinity, rather than JSON.stringify's null.
+  const s = setup();
+  assert.equal((await s.send(null, { raw: JSON.stringify(payload()).replace(/}$/, ',"durationMs":1e999}') })).status, 400);
+  assert.equal(s.writes.length, 0);
+});
+
+test('agent durations are ignored regardless of type and never persisted', async () => {
+  for (const durationMs of [0, 12_345, 604_800_001, -1, null, '1000', {}]) {
+    const s = setup();
+    assert.equal((await s.send(payload({ mode: 'agent', who: 'human', durationMs }))).status, 200);
+    assert.equal(Object.hasOwn(JSON.parse(s.writes[0].value), 'durationMs'), false);
+  }
+  const s = setup();
+  assert.equal((await s.send(payload({ mode: 'human', who: 'claude', durationMs: 500 }))).status, 200);
+  assert.equal(JSON.parse(s.writes[0].value).durationMs, 500);
+});
+
+test('frozen human duration stays stable on retry and participates in payload identity', async () => {
+  const s = setup();
+  const submissionId = '12345678-1234-4234-8234-123456789abc';
+  const body = payload({ submissionId, durationMs: 42_000 });
+  assert.equal((await s.send(body)).status, 200);
+  s.advance(60_000);
+  assert.equal((await s.send(body)).status, 200);
+  assert.equal(s.writes.length, 1);
+  assert.equal(JSON.parse(s.writes[0].value).durationMs, 42_000);
+  assert.equal((await s.send({ ...body, durationMs: 42_001 })).status, 409);
+  assert.equal(s.writes.length, 1);
 });
 
 test('native rate limit precedes body reads and storage, without persisting IP identifiers', async () => {

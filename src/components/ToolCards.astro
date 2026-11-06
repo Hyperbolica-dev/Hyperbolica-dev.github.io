@@ -1,15 +1,18 @@
 ---
 import { CONFIG } from '../lib/lmti/config';
-import { strings } from '../lib/lmti/strings.en';
+import { quizStrings } from '../lib/lmti/strings';
+import { localeFromPath, pathForLocale } from '../lib/locale';
 interface Props {
 	description: string;
 	badge: string;
 }
 const { description, badge } = Astro.props;
+const locale = localeFromPath(Astro.url.pathname);
+const strings = quizStrings(locale === 'zh' ? 'zh-CN' : 'en');
 ---
 
 <div class="tool-cards">
-	<a href={CONFIG.BASE_PATH}>
+	<a href={pathForLocale(CONFIG.BASE_PATH, locale)}>
 		<strong>{strings.title}</strong>
 		<span>{description}</span>
 		<small>{badge}</small>

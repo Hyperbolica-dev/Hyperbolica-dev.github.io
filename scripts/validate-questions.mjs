@@ -6,7 +6,7 @@ function requireCondition(condition, message) {
 }
 
 export function validateQuestions(bank) {
-  requireCondition(bank.version === 2, 'Unsupported question-bank version');
+  requireCondition(bank.version === 3, 'Unsupported question-bank version');
   requireCondition(bank.dimensions.length === 6 && new Set(bank.dimensions.map(d => d.id)).size === 6, 'Expected six unique dimensions');
   for (let n = 1; n <= 6; n++) requireCondition(bank.dimensions.some(d => d.id === `D${n}` && d.name && d.low && d.high), `Invalid dimension D${n}`);
   requireCondition(bank.questions.length === 24, 'Expected exactly 24 questions');
@@ -17,13 +17,15 @@ export function validateQuestions(bank) {
     requireCondition(bank.dimensions.some(d => d.id === q.dim), `Unknown dimension on ${q.id}`);
     requireCondition(typeof q.stem === 'string' && q.stem.length > 0, `Missing stem on ${q.id}`);
     requireCondition(['scene', 'direct'].includes(q.frame) && ['single', 'S', 'H'].includes(q.role), `Invalid frame/role on ${q.id}`);
+    requireCondition(q.kind === undefined || ['choose', 'dislike'].includes(q.kind), `Invalid question kind on ${q.id}`);
     const positions = q.options.map(option => option.pos);
     requireCondition(q.options.every(option => typeof option.text === 'string' && option.text.length > 0), `Missing option text on ${q.id}`);
-    requireCondition(positions.length <= 25 && new Set(positions).size === positions.length && [1, 2, 3, 4, 5].every(pos => positions.includes(pos)) && positions.every(pos => pos === 'X' || (Number.isFinite(pos) && pos >= 1 && pos <= 5)) && positions.filter(p => p === 'X').length === (q.probe ? 1 : 0) && positions.some(pos => typeof pos === 'number' && !Number.isInteger(pos)), `Invalid positions on ${q.id}`);
-    requireCondition(q.options.every(option => option.depth === undefined || (q.probe && option.depth === 'unscored' && typeof option.pos === 'number' && !Number.isInteger(option.pos))), `Invalid Depth metadata on ${q.id}`);
-    requireCondition(q.options.filter(option => option.depth === 'unscored').length === (q.probe ? 1 : 0), `Missing or extra Depth opt-out on ${q.id}`);
+    requireCondition(positions.length <= 25 && new Set(positions).size === positions.length && [1, 2, 3, 4, 5].every(pos => positions.includes(pos)) && positions.every(pos => ['X', 'S', 'U', 'T'].includes(pos) || (Number.isFinite(pos) && pos >= 1 && pos <= 5)) && positions.filter(p => p === 'X').length === (q.probe ? 1 : 0), `Invalid positions on ${q.id}`);
+    requireCondition(!positions.includes('T') || [11, 24].includes(q.n), `Sticker outside Q11/Q24 on ${q.id}`);
+    requireCondition(q.options.every(option => option.depth === undefined || (q.probe && ['failed', 'unscored'].includes(option.depth))), `Invalid Depth metadata on ${q.id}`);
+    requireCondition(q.options.every(option => option.tags === undefined || (Array.isArray(option.tags) && new Set(option.tags).size === option.tags.length && option.tags.every(tag => ['hedge', 'delegate'].includes(tag)))), `Invalid tags on ${q.id}`);
     requireCondition(q.agent_order.length === positions.length && new Set(q.agent_order).size === positions.length && q.agent_order.every(pos => positions.includes(pos)), `Invalid agent_order on ${q.id}`);
-    const numeric = q.agent_order.filter(pos => pos !== 'X');
+    const numeric = q.agent_order.filter(pos => typeof pos === 'number');
     requireCondition(!numeric.every((pos, i) => i === 0 || pos > numeric[i - 1]) && !numeric.every((pos, i) => i === 0 || pos < numeric[i - 1]), `Monotonic agent_order on ${q.id}`);
     requireCondition(q.role === 'single' ? q.pair === null && q.frame === 'scene' : typeof q.pair === 'string' && bank.pairs.some(pair => pair.id === q.pair), `Invalid pair association on ${q.id}`);
   }
@@ -43,6 +45,8 @@ export function validateModels(models) {
   requireCondition(Array.isArray(models) && models.length > 0 && new Set(models.map(m => m.id)).size === models.length, 'Expected unique model profiles');
   for (const model of models) {
     requireCondition(typeof model.id === 'string' && !!model.id && typeof model.name === 'string' && !!model.name && typeof model.provisional === 'boolean' && Number.isInteger(model.n_submissions) && model.n_submissions >= 0, 'Invalid model metadata');
+    requireCondition(model.profile_source === undefined || ['placeholder', 'owner-run', 'measured'].includes(model.profile_source), `Invalid profile source for ${model.id}`);
+    requireCondition(model.calibration_version === undefined || (typeof model.calibration_version === 'string' && /^LLMQ\d+$/.test(model.calibration_version)), `Invalid calibration version for ${model.id}`);
     requireCondition(Object.keys(model.profile).length === 6 && Array.from({ length: 6 }, (_, i) => model.profile[`D${i + 1}`]).every(value => Number.isFinite(value) && value >= 1 && value <= 5), `Invalid profile for ${model.id}`);
   }
   return models;
@@ -50,6 +54,7 @@ export function validateModels(models) {
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
   validateQuestions(JSON.parse(await readFile(new URL('../src/lib/lmti/data/questions.json', import.meta.url), 'utf8')));
+  validateQuestions(JSON.parse(await readFile(new URL('../src/lib/lmti/data/questions.zh-CN.json', import.meta.url), 'utf8')));
   validateModels(JSON.parse(await readFile(new URL('../src/lib/lmti/data/models.json', import.meta.url), 'utf8')));
   console.log('Question bank and model profiles are valid.');
 }

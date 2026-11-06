@@ -4,6 +4,7 @@ export { SubmissionLedger } from './ledger.mjs';
 const WHO = ['human', 'claude', 'gpt', 'gemini', 'grok', 'deepseek', 'qwen', 'kimi', 'mistral', 'other'];
 const THINK = ['off', 'low', 'medium', 'high', 'unknown'];
 const MAX_BODY = 4096;
+const MAX_DURATION_MS = 7 * 24 * 60 * 60 * 1000;
 const encoder = new TextEncoder();
 const clean = (text) => text.replace(/\p{Cc}/gu, '');
 
@@ -23,9 +24,9 @@ function validCode(code) {
   if (entries.length !== 24) return false;
   const seen = new Set();
   for (const entry of entries) {
-    const match = /^([1-9]|1[0-9]|2[0-4])=(0|[1-5](?:\.\d+)?|X)$/.exec(entry);
+    const match = /^([1-9]|1[0-9]|2[0-4])=(0|[1-5](?:\.\d+)?|[XSUT])$/.exec(entry);
     if (!match || seen.has(match[1])) return false;
-    const value = match[2] === 'X' ? 'X' : Number(match[2]);
+    const value = /^[XSUT]$/.test(match[2]) ? match[2] : Number(match[2]);
     const question = bank.questions[Number(match[1]) - 1];
     if (String(value) !== match[2] || (value !== 0 && !question.options.some(({ pos }) => pos === value))) return false;
     seen.add(match[1]);
@@ -39,6 +40,7 @@ function validate(value) {
   if (v !== bank.version || !validCode(code) || !['human', 'agent'].includes(mode) || !WHO.includes(who)
     || typeof model !== 'string' || !THINK.includes(think) || hp !== ''
     || !Array.isArray(fb) || fb.length > 24) return null;
+  if (value.language !== undefined && !['en', 'zh-CN'].includes(value.language)) return null;
   const sanitizedModel = clean(model);
   if ([...sanitizedModel].length > 40) return null;
   let nickname;
@@ -46,6 +48,11 @@ function validate(value) {
     if (typeof value.nickname !== 'string') return null;
     nickname = value.nickname.replace(/[\p{Cc}\p{Cf}]/gu, '').trim();
     if ([...nickname].length > 32) return null;
+  }
+  let durationMs;
+  if (mode === 'human' && value.durationMs !== undefined) {
+    if (!Number.isSafeInteger(value.durationMs) || value.durationMs < 0 || value.durationMs > MAX_DURATION_MS) return null;
+    durationMs = value.durationMs;
   }
   if (value.submissionId !== undefined
     && (typeof value.submissionId !== 'string' || !/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value.submissionId))) return null;
@@ -57,7 +64,7 @@ function validate(value) {
     seen.add(item.q);
     notes.push({ q: item.q, text: item.text });
   }
-  return { code, mode, who, model: sanitizedModel, think, fb: notes, ...(nickname ? { nickname } : {}) };
+  return { code, mode, who, model: sanitizedModel, think, fb: notes, ...(value.language !== undefined ? { language: value.language } : {}), ...(nickname ? { nickname } : {}), ...(durationMs !== undefined ? { durationMs } : {}) };
 }
 
 async function readBody(request) {

@@ -1,4 +1,4 @@
-export type Position = number | 'X';
+export type Position = number | 'X' | 'S' | 'U' | 'T';
 export type DimensionId = 'D1' | 'D2' | 'D3' | 'D4' | 'D5' | 'D6';
 export type Answers = Record<string, Position>;
 export interface Question {
@@ -6,12 +6,18 @@ export interface Question {
 	n: number;
 	dim: DimensionId;
 	frame: 'scene' | 'direct';
+	kind?: 'choose' | 'dislike';
 	cue: string;
 	role: 'single' | 'S' | 'H';
 	pair: string | null;
 	probe: boolean;
 	stem: string;
-	options: { pos: Position; text: string; depth?: 'unscored' }[];
+	options: {
+		pos: Position;
+		text: string;
+		depth?: 'failed' | 'unscored';
+		tags?: ('hedge' | 'delegate')[];
+	}[];
 	agent_order: Position[];
 }
 export interface Bank {
@@ -27,6 +33,7 @@ export interface Model {
 	provisional: boolean;
 	n_submissions: number;
 	profile_source?: 'placeholder' | 'owner-run' | 'measured';
+	calibration_version?: string;
 }
 interface PairScore {
 	id: string;
@@ -50,6 +57,12 @@ export interface Trait {
 }
 export interface ScoreResult {
 	dimensions: Record<DimensionId, number | null>;
+	distributions: Record<DimensionId, number[] | null>;
+	subscores: {
+		hesitation: { count: number; total: number };
+		skips: { count: number; total: number };
+		delegation: { count: number; total: number };
+	};
 	depth: {
 		passed: number;
 		scored: number;

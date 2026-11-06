@@ -2,7 +2,8 @@
 import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
 import Quiz from '../../../components/lmti/Quiz.astro';
 import { CONFIG } from '../../../lib/lmti/config';
-import { strings } from '../../../lib/lmti/strings.en';
+import { quizStrings } from '../../../lib/lmti/strings';
+const strings = quizStrings('en');
 ---
 
 <StarlightPage

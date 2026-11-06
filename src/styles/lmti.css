@@ -52,6 +52,62 @@
 	border-radius: 1rem;
 	background: var(--sl-color-bg-sidebar);
 }
+.lmti-result-language {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.5rem 1.5rem;
+	margin: 0 0 0.5rem;
+	padding: 0.75rem 1rem;
+	border: 1px solid var(--sl-color-hairline);
+	border-radius: 0.5rem;
+}
+.lmti-result-language legend {
+	padding-inline: 0.3rem;
+	font-weight: 650;
+}
+.lmti-language-choice {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.5rem;
+	min-height: 44px;
+	cursor: pointer;
+}
+.lmti-interpretation-warning {
+	margin-bottom: 1.5rem;
+	padding: 1.25rem;
+	border: 2px solid #ffffff;
+	border-radius: 0.35rem;
+	background: #000000;
+	color: #ffffff;
+	font-size: 1.1rem;
+	font-weight: 750;
+	line-height: 1.5;
+	print-color-adjust: exact;
+	-webkit-print-color-adjust: exact;
+}
+.lmti-calibration-warning {
+	padding: 0.75rem;
+	border-inline-start: 3px solid var(--sl-color-text-accent);
+	background: var(--sl-color-bg);
+	font-weight: 600;
+	line-height: 1.5;
+	overflow-wrap: anywhere;
+}
+.lmti-credits {
+	margin-top: 2rem;
+	padding-top: 1rem;
+	border-top: 1px solid var(--sl-color-hairline);
+	color: var(--sl-color-gray-2);
+	font-size: 0.85rem;
+}
+.lmti-credits h2 {
+	margin-bottom: 0.4rem;
+	font-size: 0.95rem;
+}
+.lmti-credits ul {
+	margin: 0;
+	padding-left: 1.2rem;
+}
 .lmti-label {
 	display: block;
 	margin-block: 1rem 0.4rem;

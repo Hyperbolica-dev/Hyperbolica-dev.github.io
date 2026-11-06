@@ -1,4 +1,23 @@
 ---
+import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
+import Quiz from '../../../../components/lmti/Quiz.astro';
 import { CONFIG } from '../../../../lib/lmti/config';
-return Astro.redirect(CONFIG.BASE_PATH);
+import { quizStrings } from '../../../../lib/lmti/strings';
+const strings = quizStrings('zh-CN');
 ---
+
+<StarlightPage
+	frontmatter={{
+		title: strings.title,
+		description: strings.subtitle,
+		tableOfContents: false,
+		pagefind: CONFIG.PUBLISHED,
+		head: CONFIG.PUBLISHED
+			? []
+			: [{ tag: 'meta', attrs: { name: 'robots', content: 'noindex,nofollow' } }],
+	}}
+>
+	<div data-pagefind-ignore>
+		<Quiz language="zh-CN" />
+	</div>
+</StarlightPage>

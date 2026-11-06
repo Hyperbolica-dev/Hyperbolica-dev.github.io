@@ -1,16 +1,21 @@
-# Publishing the English quiz
+# Publishing the v3 quiz
 
+**Current status: owner-approved bilingual release candidate.** Apply Tanh's polished Chinese wording, align English and regenerate both banks before release. Preserve the archived editorial return and Chinese draft.
+
+Authoritative copy: `01-questionnaire.md` (English), `QUESTIONNAIRE-v3.zh-CN.md` (complete editable Chinese counterpart). Exact game rules and mapping instructions: `ALGORITHM-v3.md`. Freeze both languages and the agent prompt before release; collect calibration only afterward.
+
+## Parent integration and owner release checklist
 1. Run `npm run dev` and open `/fun/llm-quiz/?debug=1`. Both `/fun/` and `/zh/fun/` already contain cards; do not add another navigation item.
-2. Complete the human flow, reload/back navigation, and copy/paste an agent reply. Use debug autofill and JSON export to inspect scores. The current model profiles come from section 5 of `01-questionnaire.md`; replace that table with owner-provided measurements and run `npm run quiz:data`. Never hand-edit generated JSON.
+2. Complete the human flow, reload/back navigation, and copy/paste an agent reply. Use debug autofill and JSON export to inspect scores. Confirm 24 bilingual items with matching metadata, four dislike items, Q8 numeric failure, and Q11/Q24 unscored U/T/S. Check LLMQ3 codes, v2 rejection, local dislike suppression, small-print counts and fixed agent mapping. Run `npm run quiz:data` only at parent integration, never in an editorial slice. Keep existing section-5 centroid values and old source/count metadata; no v3 samples exist yet.
 3. If collecting submissions, follow `worker/README.md`, deploy the Worker yourself, and set `SUBMIT_ENDPOINT` in `src/lib/lmti/config.ts`. Otherwise leave it empty and all submit UI stays hidden.
 4. Set `PUBLISHED: true` and `DEBUG_ENABLED: false` in that configuration. This removes the preview ribbon/robots exclusion, admits the route to sitemap and Pagefind, and ignores debug query parameters. Cards already exist by owner request.
 5. Run `npm test`, `npm run quality`, and `npm run build`. Deploy using the normal GitHub Pages workflow. No Worker deployment occurs in the site workflow.
 
 The question-to-position mapping ships in the browser bundle and can be inspected; this is acceptable for this project. Answers are not a security boundary. The Worker combines native per-location throttling with a durable global daily admission budget; see its README for bootstrap, recovery and hosting-quota limitations.
 
-## Later Chinese release
+## Chinese questionnaire
 
-Add reviewed translations of question content and a same-key strings module, then a Chinese route using the same scoring/code version and components. Until then the Chinese workbench card explicitly links to the English beta; do not imply that a Chinese questionnaire exists.
+`QUESTIONNAIRE-v3.zh-CN.md` is the editable Chinese source for `/zh/fun/llm-quiz/`, not the archived `QUESTIONNAIRE-v3.zh-CN-DRAFT.md`. Generation verifies matching metadata and option identities against canonical English and reuses its agent-letter mapping. Both locales have localized controls, agent prompts and image exports. Submission language is stored privately; calibration batches must use one frozen language, initially English.
 
 ## Route changes
 
@@ -18,15 +23,21 @@ Add reviewed translations of question content and a same-key strings module, the
 
 ## Image export and questionnaire version
 
-Save image generates a 1200×760 PNG with the primary match, model mark, runner-ups and radar. An optional human nickname (up to 32 Unicode codepoints) appears on results and the image; it stays in the browser session until the user consents to submit. It is not included in result codes. Copy image falls back to downloading when image clipboard access is unavailable. Text and result-code copying remain secondary alternatives.
+Save image generates a 1200-pixel-wide PNG with the primary match, model mark, runner-ups and radar. Height grows to fit calibration warnings, secondary counts and playful interpretation. An optional human nickname (up to 32 Unicode codepoints) appears on results and the image; it stays in the browser session until the user consents to submit. It is not included in result codes. Copy image falls back to downloading when image clipboard access is unavailable. Text and result-code copying remain secondary alternatives.
 
-Version 2 adds fractional positions within the existing six dimensions and stable seeded random question order. Version 1 codes are rejected rather than reinterpreted. Per-question mappings are documented in `01-questionnaire.md`. The production submission service is `https://submit.hyperbolica-dev-tools.workers.dev/`; its CORS allowlist permits the production Pages origin, not localhost.
+Version 3 introduces unscored non-substantive/unknown/silent-sticker choices, four dislike questions with local support downweighting, revised probe metadata and display-only counts. Codes are `LLMQ3p` / `LLMQ3a`; reject older versions rather than reinterpreting them. Preserve fractional positions and seeded question order. Mapping is documented in `01-questionnaire.md` and `ALGORITHM-v3.md`. The production submission service is `https://submit.hyperbolica-dev-tools.workers.dev/`; its CORS allowlist permits the production Pages origin, not localhost. Deploy the compatible Worker validator before pushing the frontend release.
 
 The optional title subtitle reports accepted human and agent submissions, not unique people, models, or locally completed questionnaires. It shows cached public aggregate counts and stays hidden if the service is unavailable. Nicknames and answer records are never included in this public response.
 
+Before submission, the card shows its data-use explanation and consent checkbox. After success, the entire card contains only the thank-you message, including when the result view is rendered again.
+
+Human completion time is hidden, not a displayed stopwatch. A new Start records the start locally; Finish on the last answered question freezes elapsed time before rendering results. Reload/resume preserves timing in the browser session, result viewing and submission do not extend it, and Retake clears it. This is wall elapsed time including breaks and background tabs, **not active answering time**. Agent replies and debug autofill are not timed. Older sessions/completed records, invalid timestamps, and intervals over seven days have no duration; none is inferred or backfilled. Only the optional whole-millisecond `durationMs` (0–604800000 inclusive) is sent with explicit consent and Submit. Start/finish timestamps stay local; duration is absent from result codes, copied text/images and public counts. No ticking interval or new telemetry is used.
+
+Before publishing timing collection, check Start → partial answers → reload/resume → Finish, then leave results open and submit: the duration must stay frozen. Check Retake starts fresh, legacy/completed sessions without timing and debug autofill omit duration, agents never send/store it, and public counts expose no timing. Deploy the updated Worker validator before the frontend; leave historical records untouched.
+
 ## Concise English wording
 
-The human-facing copy and copied agent questionnaire use the same canonical text. The concise revision retains all 24 items, option positions, six dimensions, paired prompts and attention checks. It removes repeated setup and explanatory padding rather than silently creating a shorter, differently scored test. Anthropomorphism, playful refusal and overenthusiastic responses are intentional.
+Human-facing and copied agent questions share the same generated bank for their language. The approved v3 keeps 24 items and six dimensions but deliberately changes option semantics, probes and dislike scoring; it is not calibration-equivalent to v2. The opening now follows Tanh's intuition wording. Preserve natural recall cues, human conversational replies, intentional anthropomorphism and exaggerated high-end warmth. There is no recall-consistency score. This release applies the owner's polish; it does not claim to resolve the reported questionnaire fatigue.
 
 Reading fewer words is not proof of a particular completion time. Do not advertise a timed completion claim without human testing. Wording can affect answers even when numeric mappings stay unchanged: the four-run GPT calibration predates this revision and remains a provisional reference, not evidence of equivalence between wordings.
 
@@ -37,3 +48,13 @@ Editorial references:
 - [Government Analysis Function: Questionnaire design guidance](https://analysisfunction.civilservice.gov.uk/policy-store/questionnaire-design-guidance/) — published 14 March 2023 and explicitly marked as under review when consulted: reduce respondent effort, write for the audience and test understanding alongside usability. Used as supporting guidance, not as a newly validated quiz format.
 
 These sources inform presentation and wording; none validates this recreational LLM-matching questionnaire or its humor.
+
+## Feedback language and calibration
+
+Literal feedback describes observable choices in this sitting, with the existing Thinking depth and Mask labels. The optional interpretive mode offers playful, MBTI-style narrative without assigning MBTI types or claiming psychological validity. Its black-box warning must remain visible in results and image/text exports. Switching language does not change answers, scores, matches, result codes or submission payloads.
+
+Credits use Tanh for project direction, editorial decisions, testing and sample collection; Claude for the initial questionnaire, dimensions and archived v3 editorial return; ChatGPT for engineering, deployment and iteration; Qwen for suggestions and calibration responses. Claude's editorial return is complete; approved overrides and user polishing are reflected in the canonical documents.
+
+Follow [the calibration protocol](./CALIBRATION.md): after polishing, freeze and authorized deployment, collect three new runs each for GPT, Qwen, DeepSeek, Gemini, Claude and Grok—18 total. Existing centroids and old submission metadata remain exploratory. Kimi and Mistral remain speculative; do not add GLM or Doubao.
+
+The v3 matcher uses respondent support distributions against retained model centroids, not a trained classifier. Adequacy requires `calibration_version === 'LLMQ3'`, `n_submissions >= 3`, and `profile_source === 'owner-run'`; old counts do not satisfy it. An inadequate winning model must show “This model has insufficient calibration data and may be substantially off.” / “当前模型的标定数据尚不足，可能有较大偏差” on the result page, copied text and exported PNG. Check those surfaces at parent integration, including speculative winners.

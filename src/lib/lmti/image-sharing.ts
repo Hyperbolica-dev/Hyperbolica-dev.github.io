@@ -1,5 +1,5 @@
 import type { Bank, ScoreResult } from './types';
-import { strings as s, text } from './strings.en';
+import { quizStrings, text, type QuizLanguage } from './strings';
 import { modelIconUrl } from './model-icons';
 
 /** Local, self-contained PNG: no answer code, notes, network request, or external renderer. */
@@ -9,13 +9,53 @@ export async function createResultImage(
 	enough: boolean,
 	url: string,
 	nickname?: string,
+	presentation?: { playful: boolean; portrait: string[]; calibrationWarning?: boolean },
+	language: QuizLanguage = 'en',
 ): Promise<Blob> {
+	const s = quizStrings(language);
 	const canvas = document.createElement('canvas');
 	canvas.width = 1200;
 	canvas.height = 760;
 	const context = canvas.getContext('2d');
 	if (!context) throw new Error('Canvas unavailable');
 	const ctx: CanvasRenderingContext2D = context;
+	const playful = presentation?.playful ?? false;
+	function wrap(value: string, size: number, weight = 400) {
+		ctx.font = `${weight} ${size}px system-ui, sans-serif`;
+		const lines: string[] = [];
+		let line = '';
+		for (const word of value.match(
+			/\s+|[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}]|[^\s\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}]+/gu,
+		) ?? []) {
+			for (const part of ctx.measureText(word).width > 1104 ? Array.from(word) : [word]) {
+				const next = line + part;
+				if (line && ctx.measureText(next).width > 1104) {
+					lines.push(line.trimEnd());
+					line = part.trimStart();
+				} else line = next;
+			}
+		}
+		if (line) lines.push(line);
+		return lines;
+	}
+	const warningLines = playful ? wrap(s.interpretationWarning, 28, 700) : [];
+	const detailLines = [
+		...(enough && presentation?.calibrationWarning ? [s.calibrationWarning] : []),
+		...(Object.keys(s.subscoreLabels) as (keyof typeof s.subscoreLabels)[]).map((key) =>
+			text(s.subscoreCount, { label: s.subscoreLabels[key], ...result.subscores[key] }),
+		),
+		...(playful
+			? [
+					s.interpretationTitle,
+					s.interpretationScope,
+					...(presentation?.portrait ?? []),
+					s.playfulDepthCaption,
+					s.roleShiftCaption,
+				]
+			: []),
+	].flatMap((line) => wrap(line, 18));
+	const warningHeight = playful ? warningLines.length * 38 + 40 : 0;
+	canvas.height = 760 + warningHeight + detailLines.length * 28 + 40;
 	const color = {
 		bg: '#101620',
 		panel: '#192330',
@@ -25,7 +65,7 @@ export async function createResultImage(
 		grid: '#3c4a59',
 	};
 	ctx.fillStyle = color.bg;
-	ctx.fillRect(0, 0, 1200, 760);
+	ctx.fillRect(0, 0, canvas.width, canvas.height);
 	function panel(x: number, y: number, w: number, h: number) {
 		ctx.fillStyle = color.panel;
 		ctx.beginPath();
@@ -45,6 +85,13 @@ export async function createResultImage(
 		ctx.font = `${weight} ${size}px system-ui, sans-serif`;
 		ctx.fillText(value, x, y, maxWidth);
 	}
+	if (playful) {
+		ctx.fillStyle = '#000000';
+		ctx.fillRect(0, 0, canvas.width, warningHeight);
+		warningLines.forEach((line, i) => label(line, 48, 44 + i * 38, 28, '#ffffff', 700));
+		ctx.translate(0, warningHeight);
+	}
+	detailLines.forEach((line, i) => label(line, 48, 790 + i * 28, 18, color.ink));
 	async function icon(id: string, x: number, y: number, size: number) {
 		const src = modelIconUrl(id, color.accent);
 		if (!src) return;
@@ -141,15 +188,32 @@ export async function createResultImage(
 	ctx.textAlign = 'left';
 	panel(32, 596, 1136, 80);
 	label(
-		`${s.imageDepth}  ${result.depth.passed}/${result.depth.scored}`,
+		`${playful ? s.imageClues : s.imageDepth}  ${result.depth.passed}/${result.depth.scored}`,
 		64,
 		645,
-		25,
+		22,
 		color.ink,
 		600,
+		430,
 	);
-	label(`${s.imageMask}  ${result.mask?.toFixed(2) ?? s.noData}`, 390, 645, 25, color.ink, 600);
-	label(result.maskLabel ? s.maskLabels[result.maskLabel] : '', 680, 645, 20, color.muted);
+	label(
+		`${playful ? s.imageRoleShift : s.imageMask}  ${result.mask?.toFixed(2) ?? s.noData}`,
+		510,
+		645,
+		22,
+		color.ink,
+		600,
+		365,
+	);
+	label(
+		result.maskLabel ? (playful ? s.roleShiftLabels : s.maskLabels)[result.maskLabel] : '',
+		900,
+		645,
+		18,
+		color.muted,
+		400,
+		235,
+	);
 	label(url, 48, 714, 18, color.accent, 500, 1100);
 	label(s.imageFooter, 48, 742, 14, color.muted);
 	const { promise, resolve, reject } = Promise.withResolvers<Blob>();
@@ -160,7 +224,8 @@ export async function createResultImage(
 	return promise;
 }
 
-export function downloadResultImage(blob: Blob): void {
+export function downloadResultImage(blob: Blob, language: QuizLanguage = 'en'): void {
+	const s = quizStrings(language);
 	const url = URL.createObjectURL(blob);
 	const link = document.createElement('a');
 	link.href = url;

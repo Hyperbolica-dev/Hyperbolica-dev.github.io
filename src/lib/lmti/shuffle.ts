@@ -20,7 +20,9 @@ export function shuffleOptions(question: Question, seed: number): Question['opti
 			const j = Math.floor(random() * (i + 1));
 			[result[i], result[j]] = [result[j], result[i]];
 		}
-		const numbers = result.map((option) => option.pos).filter((pos): pos is number => pos !== 'X');
+		const numbers = result
+			.map((option) => option.pos)
+			.filter((pos): pos is number => typeof pos === 'number');
 		monotonic =
 			numbers.length > 1 &&
 			(numbers.every((n, i) => i === 0 || n > numbers[i - 1]) ||

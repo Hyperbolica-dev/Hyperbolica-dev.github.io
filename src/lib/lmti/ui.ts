@@ -1,27 +1,33 @@
 import questionData from './data/questions.json';
+import chineseQuestionData from './data/questions.zh-CN.json';
 import modelData from './data/models.json';
 import type { Answers, Bank, Model, Position, ScoreResult } from './types';
 import { CONFIG } from './config';
-import { strings as s, text } from './strings.en';
+import { quizStrings, text, type QuizStrings } from './strings';
+import { dimensionLabels as chineseDimensions } from './strings.zh-CN';
 import { scoreAnswers } from './scoring';
 import { shuffleOptions, shuffleQuestions } from './shuffle';
 import { generateAgentPrompt } from './agent';
 import { decodeReply, encodeResult } from './code';
 import { modelIcon } from './model-icons';
 import { createResultImage, downloadResultImage } from './image-sharing';
+import {
+	finishHumanTiming,
+	humanDurationMs,
+	restoreHumanTiming,
+	type HumanTiming,
+} from './session';
 
-const bank = questionData as Bank;
 const models = modelData as Model[];
-const storageKey = 'lmti:v2:session';
-type Think = keyof typeof s.thinkingLevels;
-type Who = keyof typeof s.families;
+type Think = keyof QuizStrings['thinkingLevels'];
+type Who = keyof QuizStrings['families'];
 type Session = {
 	seed: number;
 	answers: Answers;
 	notes: Record<string, string>;
 	index: number;
 	mode: 'human' | 'agent';
-	startedAt: number;
+	timing?: HumanTiming;
 	nickname: string;
 };
 
@@ -53,7 +59,7 @@ function randomSeed() {
 function validPosition(q: Bank['questions'][number], value: unknown): value is Position {
 	return value === 0 || q.options.some(({ pos }) => pos === value);
 }
-function loadSession(): Session | null {
+function loadSession(bank: Bank, storageKey: string): Session | null {
 	try {
 		const saved = JSON.parse(sessionStorage.getItem(storageKey) || 'null');
 		if (
@@ -84,7 +90,7 @@ function loadSession(): Session | null {
 			notes,
 			index: saved.index,
 			mode: 'human',
-			startedAt: Number(saved.startedAt) || Date.now(),
+			timing: restoreHumanTiming(saved.timing, saved.index === bank.questions.length),
 			nickname: typeof saved.nickname === 'string' ? cleanNickname(saved.nickname) : '',
 		};
 	} catch {
@@ -93,6 +99,21 @@ function loadSession(): Session | null {
 }
 
 export function mountQuiz(app: HTMLElement) {
+	const language = app.dataset.lmtiLanguage === 'zh-CN' ? 'zh-CN' : 'en';
+	const s = quizStrings(language);
+	const sourceBank = (language === 'zh-CN' ? chineseQuestionData : questionData) as Bank;
+	const bank: Bank =
+		language === 'zh-CN'
+			? {
+					...sourceBank,
+					dimensions: sourceBank.dimensions.map((dimension) => ({
+						...dimension,
+						...chineseDimensions[dimension.id],
+					})),
+				}
+			: sourceBank;
+	const storageKey = `lmti:v3:session:${language}`;
+	const quizPath = language === 'zh-CN' ? `/zh${CONFIG.BASE_PATH}` : CONFIG.BASE_PATH;
 	const screen = app.querySelector<HTMLElement>('[data-lmti-screen]')!;
 	const status = app.querySelector<HTMLElement>('[data-lmti-status]')!;
 	const params = new URLSearchParams(location.search);
@@ -101,7 +122,7 @@ export function mountQuiz(app: HTMLElement) {
 		CONFIG.DEBUG_ENABLED && /^\d+$/.test(params.get('seed') || '')
 			? Number(params.get('seed')) >>> 0
 			: null;
-	let session = loadSession();
+	let session = loadSession(bank, storageKey);
 	let seed = overrideSeed ?? session?.seed ?? randomSeed();
 	if (session && overrideSeed !== null) session.seed = seed;
 	let mode: 'human' | 'agent' = 'human';
@@ -301,7 +322,7 @@ export function mountQuiz(app: HTMLElement) {
 		const agent = el('section', 'lmti-panel');
 		agent.append(el('h2', 'lmti-divider', s.agentDivider));
 		const copyButton = button(s.agentCopy, () => {
-			void copy(generateAgentPrompt(bank, seed), copyButton, s.agentCopied);
+			void copy(generateAgentPrompt(bank, seed, language), copyButton, s.agentCopied);
 		});
 		const area = el('textarea', 'lmti-textarea');
 		area.id = 'lmti-agent-reply';
@@ -330,7 +351,7 @@ export function mountQuiz(app: HTMLElement) {
 		submitted = false;
 		submissionIds.clear();
 		seed = overrideSeed ?? randomSeed();
-		session = { seed, answers, notes, index: 0, mode, startedAt: Date.now(), nickname };
+		session = { seed, answers, notes, index: 0, mode, timing: { startedAt: Date.now() }, nickname };
 		save();
 		renderQuestion();
 	}
@@ -342,6 +363,7 @@ export function mountQuiz(app: HTMLElement) {
 		)
 			return;
 		session.index++;
+		if (session.index === bank.questions.length) session.timing = finishHumanTiming(session.timing);
 		save();
 		if (session.index === bank.questions.length) renderResult();
 		else renderQuestion();
@@ -418,7 +440,13 @@ export function mountQuiz(app: HTMLElement) {
 		if (session.index > 0) actions.append(button(s.back, goBack));
 		actions.append(next);
 		const question = el('section', 'lmti-question');
-		question.append(el('p', 'lmti-eyebrow', s.questionEyebrow), stem, group, noteBox, actions);
+		question.append(
+			el('p', 'lmti-eyebrow', q.kind === 'dislike' ? s.dislikeEyebrow : s.questionEyebrow),
+			stem,
+			group,
+			noteBox,
+			actions,
+		);
 		screen.append(progress, bar, question);
 		if (session.index === 0)
 			screen.append(el('p', 'lmti-muted', text(s.tipKeys, { n: Math.min(9, displayed.length) })));
@@ -431,10 +459,28 @@ export function mountQuiz(app: HTMLElement) {
 			...(mode === 'agent' ? { model } : {}),
 		});
 	}
-	function resultCard(result: ScoreResult, enough: boolean) {
+	function insufficientCalibration(result: ScoreResult) {
+		const winner = models.find(({ id }) => id === result.matches[0]?.id);
+		return (
+			!winner ||
+			winner.calibration_version !== 'LLMQ3' ||
+			winner.profile_source !== 'owner-run' ||
+			!(winner.n_submissions >= 3)
+		);
+	}
+	function subscoreLines(result: ScoreResult) {
+		return (Object.keys(s.subscoreLabels) as (keyof typeof s.subscoreLabels)[]).map((key) =>
+			text(s.subscoreCount, { label: s.subscoreLabels[key], ...result.subscores[key] }),
+		);
+	}
+	function resultCard(result: ScoreResult, enough: boolean, playful: boolean, portrait: string[]) {
 		const [top, ...others] = result.matches;
 		return [
+			...(playful
+				? [s.interpretationWarning, s.interpretationTitle, s.interpretationScope, ...portrait]
+				: [s.resultEyebrow]),
 			enough && top ? text(s.cardMatch, { model: top.name, n: top.similarity }) : s.noMatch,
+			...(enough && top && insufficientCalibration(result) ? [s.calibrationWarning] : []),
 			...(enough
 				? [
 						text(s.cardThen, {
@@ -445,13 +491,16 @@ export function mountQuiz(app: HTMLElement) {
 						}),
 					]
 				: []),
-			text(s.cardStats, {
+			text(playful ? s.playfulCardStats : s.cardStats, {
 				passed: result.depth.passed,
 				scored: result.depth.scored,
 				mask: result.mask?.toFixed(2) ?? s.noData,
 			}),
+			...(playful ? [s.playfulDepthCaption, s.roleShiftCaption] : [s.maskCaption]),
+			...subscoreLines(result),
+			s.imageFooter,
 			code(),
-			new URL(CONFIG.BASE_PATH, location.origin).href,
+			new URL(quizPath, location.origin).href,
 		].join('\n');
 	}
 	function renderRadar(result: ScoreResult, enough: boolean) {
@@ -585,10 +634,36 @@ export function mountQuiz(app: HTMLElement) {
 			closeCallPoints: CONFIG.CLOSE_CALL_POINTS,
 		});
 		const enough =
-			bank.questions.filter(
-				(q) => q.role !== 'H' && typeof answers[q.id] === 'number' && answers[q.id] !== 0,
-			).length >= CONFIG.MIN_SCORED_ITEMS;
+			result.matches.length > 0 && bank.dimensions.some(({ id }) => result.dimensions[id] !== null);
 		const top = result.matches[0];
+		let playful = false;
+		const portrait = result.traits.length
+			? result.traits.map(({ dim, pole }) => s.interpretationTraits[dim][pole])
+			: [s.interpretationEmpty];
+		const warning = el('aside', 'lmti-interpretation-warning', s.interpretationWarning);
+		warning.hidden = true;
+		const languageChoices = el('fieldset', 'lmti-result-language');
+		languageChoices.append(el('legend', '', s.resultLanguage));
+		const languageHelp = el('p', 'lmti-muted', s.resultLanguageHelp);
+		languageHelp.id = 'lmti-result-language-help';
+		languageChoices.setAttribute('aria-describedby', languageHelp.id);
+		for (const [value, labelText] of Object.entries(s.resultLanguages)) {
+			const input = el('input');
+			input.type = 'radio';
+			input.name = 'lmti-result-language';
+			input.value = value;
+			input.checked = value === 'literal';
+			input.addEventListener('change', () => {
+				if (!input.checked) return;
+				playful = value === 'playful';
+				refreshLanguage();
+				announce(text(s.resultLanguageChanged, { language: labelText }));
+			});
+			const label = el('label', 'lmti-language-choice');
+			label.append(input, document.createTextNode(labelText));
+			languageChoices.append(label);
+		}
+		screen.append(warning, languageChoices, languageHelp);
 		const hero = el('div', 'lmti-result-hero');
 		const identity = el('section', 'lmti-result-identity');
 		identity.append(el('p', 'lmti-eyebrow', s.resultEyebrow));
@@ -603,6 +678,8 @@ export function mountQuiz(app: HTMLElement) {
 			const percent = el('p', 'lmti-match-percent');
 			percent.append(el('strong', '', `${top.similarity}%`), el('span', '', s.matchLabel));
 			identity.append(percent);
+			if (insufficientCalibration(result))
+				identity.append(el('p', 'lmti-calibration-warning', s.calibrationWarning));
 			if (result.closeCall)
 				identity.append(
 					el('p', 'lmti-close-call', text(s.closeCall, { a: top.name, b: result.matches[1].name })),
@@ -624,6 +701,16 @@ export function mountQuiz(app: HTMLElement) {
 		screen.append(hero);
 		const answered = el('p', 'lmti-muted');
 		if (mode === 'agent') screen.append(answered);
+		const interpretation = el('section', 'lmti-panel lmti-interpretation');
+		interpretation.hidden = true;
+		interpretation.append(
+			el('h3', '', s.interpretationTitle),
+			el('p', 'lmti-muted', s.interpretationScope),
+		);
+		const portraitList = el('ul');
+		for (const line of portrait) portraitList.append(el('li', '', line));
+		interpretation.append(portraitList);
+		screen.append(interpretation);
 		if (result.traits.length)
 			screen.append(
 				el(
@@ -641,37 +728,24 @@ export function mountQuiz(app: HTMLElement) {
 			);
 		const stats = el('div', 'lmti-stats');
 		const depth = el('section', 'lmti-panel');
-		depth.append(
-			el('h3', '', text(s.depth, { passed: result.depth.passed, scored: result.depth.scored })),
-			el(
-				'p',
-				'lmti-muted',
-				result.depth.scored === 0
-					? s.depthNone
-					: result.depth.passed === 4
-						? s.depthFull
-						: result.depth.passed <= 1
-							? s.depthFast
-							: s.depthOther,
-			),
-		);
+		const depthTitle = el('h3');
+		const depthCaption = el('p', 'lmti-muted');
+		depth.append(depthTitle, depthCaption);
 		const mask = el('section', 'lmti-panel');
-		mask.append(
-			el(
-				'h3',
-				'',
-				result.mask === null
-					? s.maskMissing
-					: text(s.mask, { mask: result.mask.toFixed(2), label: s.maskLabels[result.maskLabel!] }),
-			),
-			el('p', 'lmti-muted', s.maskCaption),
-		);
+		const maskTitle = el('h3');
+		const maskCaption = el('p', 'lmti-muted');
+		mask.append(maskTitle, maskCaption);
 		stats.append(depth, mask);
 		screen.append(stats);
+		const subscores = el('section', 'lmti-panel');
+		subscores.append(el('h3', '', s.subscoreTitle));
+		for (const line of subscoreLines(result)) subscores.append(el('p', '', line));
+		subscores.append(el('p', 'lmti-muted', s.subscoreCaption));
+		screen.append(subscores);
 		const cardSection = el('section', 'lmti-panel lmti-share');
 		const card = el('pre', 'lmti-card');
 		const copyCard = button(s.copyCard, () => {
-			void copy(resultCard(result, enough), copyCard);
+			void copy(resultCard(result, enough, playful, portrait), copyCard);
 		});
 		const copyCode = button(s.copyCode, () => {
 			void copy(code(), copyCode);
@@ -693,8 +767,10 @@ export function mountQuiz(app: HTMLElement) {
 				bank,
 				result,
 				enough,
-				new URL(CONFIG.BASE_PATH, location.origin).href,
+				new URL(quizPath, location.origin).href,
 				mode === 'human' ? nickname : undefined,
+				{ playful, portrait, calibrationWarning: enough && insufficientCalibration(result) },
+				language,
 			);
 			try {
 				if (toClipboard && typeof ClipboardItem !== 'undefined' && navigator.clipboard?.write) {
@@ -704,12 +780,12 @@ export function mountQuiz(app: HTMLElement) {
 						announce(s.imageCopied);
 						return;
 					} catch {
-						downloadResultImage(await blob);
+						downloadResultImage(await blob, language);
 						announce(s.imageFallback);
 						return;
 					}
 				}
-				downloadResultImage(await blob);
+				downloadResultImage(await blob, language);
 				announce(toClipboard ? s.imageFallback : s.imageSaved);
 			} catch {
 				announce(s.imageError);
@@ -738,11 +814,40 @@ export function mountQuiz(app: HTMLElement) {
 		);
 		screen.append(cardSection);
 		function refreshMetadata() {
-			card.textContent = resultCard(result, enough);
+			card.textContent = resultCard(result, enough, playful, portrait);
 			resultCode.textContent = code();
-			answered.textContent = text(s.answeredBy, { model, think });
+			answered.textContent = text(s.answeredBy, { model, think: s.thinkingLevels[think] });
 		}
-		refreshMetadata();
+		function refreshLanguage() {
+			warning.hidden = interpretation.hidden = !playful;
+			depthTitle.textContent = text(playful ? s.playfulDepth : s.depth, {
+				passed: result.depth.passed,
+				scored: result.depth.scored,
+			});
+			const depthObservation =
+				result.depth.scored === 0
+					? s.depthNone
+					: result.depth.passed === 4
+						? s.depthFull
+						: result.depth.passed <= 1
+							? s.depthFast
+							: s.depthOther;
+			depthCaption.textContent = playful
+				? `${depthObservation} ${s.playfulDepthCaption}`
+				: depthObservation;
+			maskTitle.textContent =
+				result.mask === null
+					? playful
+						? s.roleShiftMissing
+						: s.maskMissing
+					: text(playful ? s.roleShift : s.mask, {
+							mask: result.mask.toFixed(2),
+							label: (playful ? s.roleShiftLabels : s.maskLabels)[result.maskLabel!],
+						});
+			maskCaption.textContent = playful ? s.roleShiftCaption : s.maskCaption;
+			refreshMetadata();
+		}
+		refreshLanguage();
 		if (mode === 'agent' || CONFIG.SUBMIT_ENDPOINT) {
 			const metadata = el('div', 'lmti-metadata');
 			const modelInput = el('input', 'lmti-input');
@@ -787,19 +892,19 @@ export function mountQuiz(app: HTMLElement) {
 			}),
 		);
 		const back = el('a', 'lmti-button', s.backBlog);
-		back.href = '/fun/';
+		back.href = language === 'zh-CN' ? '/zh/fun/' : '/fun/';
 		actions.append(back);
 		screen.append(actions);
 		finishRender();
 	}
 	function renderSubmit() {
 		const panel = el('section', 'lmti-panel lmti-submit');
-		panel.append(el('h3', '', s.submitTitle), el('p', '', s.submitBody));
 		if (submitted) {
 			panel.append(el('p', '', s.submitted));
 			screen.append(panel);
 			return;
 		}
+		panel.append(el('h3', '', s.submitTitle), el('p', '', s.submitBody));
 		const form = el('form');
 		const hp = el('input');
 		hp.name = 'hp';
@@ -827,14 +932,17 @@ export function mountQuiz(app: HTMLElement) {
 			if (!consent.checked || submitted || submit.disabled || dryRun) return;
 			submit.disabled = true;
 			submit.textContent = s.sending;
+			const durationMs = mode === 'human' ? humanDurationMs(session?.timing) : undefined;
 			const payload = {
-				v: CONFIG.QUIZ_VERSION,
+				v: bank.version,
 				code: code(),
 				mode,
+				language,
 				who,
 				model,
 				think,
 				...(mode === 'human' && nickname ? { nickname } : {}),
+				...(durationMs !== undefined ? { durationMs } : {}),
 				fb:
 					mode === 'human'
 						? Object.entries(notes)
@@ -857,7 +965,7 @@ export function mountQuiz(app: HTMLElement) {
 				});
 				if (!response.ok || (await response.json()).ok !== true) throw new Error('submit');
 				submitted = true;
-				form.replaceChildren(el('p', '', s.submitted));
+				panel.replaceChildren(el('p', '', s.submitted));
 				announce(s.submitted);
 			} catch {
 				feedback.textContent = s.submitError;
@@ -930,7 +1038,6 @@ export function mountQuiz(app: HTMLElement) {
 						notes,
 						index: bank.questions.length,
 						mode,
-						startedAt: Date.now(),
 						nickname,
 					};
 					save();

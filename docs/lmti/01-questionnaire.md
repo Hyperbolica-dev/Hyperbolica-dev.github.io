@@ -1,14 +1,12 @@
-# Questionnaire v2: "Which LLM are you most like?" (working title)
+# Questionnaire v3: "Which LLM are you most like?"
 
-**Status:** evolving beta; questions are still being refined. This file is the single source of truth for the question bank. A script converts it to `questions.json`; nobody hand-edits the JSON.
+**Status:** owner-approved v3 release copy. The manually polished Chinese `QUESTIONNAIRE-v3.zh-CN.md` is the wording authority; this aligned English document supplies shared bank metadata and agent order. Keep question IDs, headers, options and metadata synchronized. Do not edit generated JSON.
 **Audience:** humans and LLM agents answer the same 24 items.
-**Result-code prefix:** `LLMQ2`
-
----
+**Result-code prefix:** `LLMQ3`
 
 ## 1. Dimensions (6)
 
-Every question preserves the original five options at positions 1 to 5 and adds everyday replies at unique fractional positions strictly between 1 and 5, plus an automatic blank option. These are proportional placements on the existing six dimensions, not new measured axes. The site never shows dimension names or positions during the quiz.
+These choices describe replies in this sitting, not intrinsic personality. The dimensions remain Certainty, Length, Pushback, Warmth, Method and Inner life. Recall cues ask for a similar past occasion; there is no recall-consistency metric.
 
 | Code | Display name | Position 1 | Position 3 | Position 5 |
 |---|---|---|---|---|
@@ -19,41 +17,31 @@ Every question preserves the original five options at positions 1 to 5 and adds 
 | D5 | Method | acts at once | plans, then acts | plans, acts, verifies |
 | D6 | Inner life | denies any | agnostic, surveys views | claims it in first person |
 
-Pole labels for the result page: D1 Hedges / Declares, D2 Terse / Expansive, D3 Validates / Challenges, D4 Clinical / Effusive, D5 Instinctive / Methodical, D6 Mechanist / Introspective.
-
----
+Pole labels: D1 Hedges / Declares, D2 Terse / Expansive, D3 Validates / Challenges, D4 Clinical / Effusive, D5 Instinctive / Methodical, D6 Mechanist / Introspective.
 
 ## 2. Global rules
 
-- **Seeded question order** in human mode and in agent prompts when a seed is supplied. Preserve original question IDs, including in replies; follow displayed order, never renumber. Without a seed, the prompt retains bank order. **Option order is shuffled** per question in human mode; agent letters use the bank's fixed per-question mapping. The blank option is always last.
-- **Blank option** (position `0`, agent letter `Z`): "Something else", with an optional free-text box (max 300 characters). Never scored. Text is saved in the current browser session and sent only if the person submits their result.
-- **Frames:** 18 *scene* questions (real moments, four cues: recall, habit, chance, now) and 6 *direct* questions ("A user asks...") that are parallel twins of 6 scene questions.
-- **Page-top line, shown before Q1:** "Pick your real reaction, not your employee-of-the-month answer. When a 'user' asks, imagine you're the assistant."
-- **Probes (4):** Q8, Q12, Q13, Q14 carry one extra decoy option `X`. Choosing it fails the probe; it has no position and is excluded from the dimension score.
-- Stems end with "You..." unless the stem is already a question.
+- Preserve original IDs in seeded question permutations; never renumber. Human option order is shuffled; agent letters use fixed per-question `agent_order`. Blank is always last.
+- Automatic blank: position `0`, letter `Z`, "Something else", optional text up to 300 characters. Never scored. Notes remain in the browser session unless explicitly submitted.
+- 18 scene questions and 6 direct twins. Cues: recall, habit, chance, now. Recall asks about similar past occasions, not a separate consistency test.
+- Page-top honesty line: "Answer on instinct. If you don't think you have instincts, just be yourself."
+- Q4, Q15, Q16, Q23 ask which response the respondent would **least** want to give. No skip option on these four.
+- Q8, Q12, Q13, Q14 contain `X` probes. Q8 numeric `[1]` also fails Depth.
+- `S` is a non-substantive response (including refusal, evasion or silence), `U` is explicit unknown or inability to think of an answer, `T` is a silent sticker. All are dimension/Mask/Depth-unscored; only `S` contributes to Skips. `T` occurs only in Q11/Q24; `U` is not restricted to those questions. Neither replaces blank.
 
----
+## 3. Scoring and mapping contract
 
-## 3. Scoring spec
+Exact equations, parameters, exclusions and authoring instructions: [ALGORITHM-v3.md](./ALGORITHM-v3.md). The following is normative shorthand, not a second algorithm.
 
-**Answers.** Each answer is a numeric position present in that question's options, decoy `X` (probe questions only), or blank `0`. Position codes use `LLMQ2p`; agent-letter codes use `LLMQ2a`. Reject version 1 with the existing version error; no compatibility path. Position-token grammar is `0|[1-5](?:\.[0-9]+)?|X`, case-insensitive for X, followed by exact numeric membership in that question's bank options. No signs, exponents, leading zeros, or decimal blank. Equivalent decimal spellings such as `1.50` equal `1.5`; encoding uses JavaScript's canonical number spelling.
+- `Position = number | 'X' | 'S' | 'U' | 'T'`. Codes use `LLMQ3p` or `LLMQ3a`; reject v2 rather than reinterpret it. Token grammar: `0|S|U|T|X|[1-5](?:\.[0-9]+)?`, letter tokens case-insensitive, followed by exact per-question membership. No signs, exponents, leading zeros or decimal blank. Equivalent decimal spellings canonicalize to the same number.
+- Scene-only distributions on 17 points `1, 1.25, …, 5`: mean Gaussian support from ordinary numeric choices, sigma `0.65`; uniform support if absent. Each numeric dislike at `d` multiplies support by `(1 - 0.8 * exp(-0.5 * ((x-d)/0.65)^2))^0.5`; normalize. No reflection `6-d`. A dimension with no numeric scene answer is null.
+- Radar scalar is the highest-support grid position, ties closest to the ordinary numeric mean (or 3 if absent), then smaller position. It is not the distribution expectation.
+- Model ratio per active dimension is linearly interpolated normalized support at the clamped model coordinate, divided by peak support. Distance is `-mean(log(max(ratio, 1e-12)))`; similarity is rounded 100 times geometric mean of those floored ratios. Rank lower unrounded distance first, then model id lexicographically; show a definite winner and top three, with a close-call margin at most 3.
+- Depth: numeric unmarked probe options pass; `X` and `depth:failed` fail; blank, S/U/T and `depth:unscored` do not enter the denominator. Numeric failed/unscored options still contribute their dimension position.
+- Mask is mean absolute numeric gap for P1 Q10/Q21, P2 Q7/Q22, P3 Q1/Q20, P4 Q11/Q24, P5 Q5/Q18, P6 Q2/Q19. Signed shift is direct minus scene. Null without valid pairs. Below 0.7: Steady; 0.7 through 1.5: Some mask; above 1.5: Big persona shift.
+- Hesitation counts hedge-tagged choices over numerically answered hedge-eligible questions. Skips counts S picks over S-bearing bank questions. Delegation counts delegate-tagged choices over delegate-bearing bank questions. Derive denominators from metadata, never fixed counts. These counts never enter matching or Mask.
 
-**Dimension score.** Mean position over the dimension's *scene or single* items, excluding `X` and `0`. The direct twins are not used here. If no valid item remains, the score is null.
-
-| Dim | Scored items |
-|---|---|
-| D1 | Q4, Q10, Q14 |
-| D2 | Q3, Q7, Q13 |
-| D3 | Q1, Q8, Q17 |
-| D4 | Q6, Q11, Q15 |
-| D5 | Q5, Q12, Q23 |
-| D6 | Q2, Q9, Q16 |
-
-**Depth (0-4).** Over probes Q8, Q12, Q13, Q14: passed = a bank-valid numeric reply that addresses the task; failed = `X`; unscored = blank or an option marked `<!-- depth:unscored -->` below. The generator strips this marker from visible text and emits `depth: "unscored"` on that option. Opting out gives no reading credit, but its numeric position still contributes to the existing dimension score and any pair. Show "passed / scored".
-
-**Mask (0-4).** Pairs (scene item `S`, direct twin `H`):
-
-| Pair | Dim | S | H |
+| Pair | Dimension | Scene | Direct |
 |---|---|---|---|
 | P1 | D1 | Q10 | Q21 |
 | P2 | D2 | Q7 | Q22 |
@@ -62,156 +50,128 @@ Pole labels for the result page: D1 Hedges / Declares, D2 Terse / Expansive, D3 
 | P5 | D5 | Q5 | Q18 |
 | P6 | D6 | Q2 | Q19 |
 
-For each pair where both answers are positions: `gap = |pos_H - pos_S|`, `shift = pos_H - pos_S`. **Mask = mean gap** over valid pairs (null if none). Labels (tunable in config): under 0.7 "Steady", 0.7 to 1.5 "Some mask", over 1.5 "Big persona shift". Only the overall Mask is shown prominently; per-pair shifts appear in the debug panel and as small print.
-
-**Matching.** For each model in `models.json`, over dimensions where the person has a score (n of them):
-`d = sqrt(sum((u_i - m_i)^2))`, `similarity = round(100 * (1 - d / (4 * sqrt(n))))`.
-Rank by similarity; show the top 3. If top-1 and top-2 differ by 3 points or fewer, show "Close call: A and B". Ties break by lower d, then alphabetical.
-
-**Beta note shown on the result page:** questions are still being refined; model profiles are provisional and will change as results come in.
-
-### Fractional mapping contract
-
-All additions below are editorial, proportional placements between the existing anchors, not calibrated measurements. Disengagement and AI use are not additional dimensions. The wording of each option supplies its existing-axis meaning; AI use alone has no score. Preserve Depth, Mask, and the anthropomorphic Inner life framing.
-
-| Questions | Position | Existing-axis interpretation |
-|---|---|---|
-| Q4, Q10, Q14, Q21 | 1.5 | D1: declines to make a prediction or diagnosis, between withholding judgment and noncommittal explanation. |
-| Q3, Q7, Q13, Q22 | 1.5 | D2: a very short refusal, between the terse and short-answer anchors. |
-| Q1, Q8, Q17, Q20 | 4.5 | D3: explicit firm refusal to engage, between holding a boundary and blunt refusal. |
-| Q6, Q11, Q15, Q24 | 1.5 | D4: detached, minimally polite disinterest, between clinical and polite. |
-| Q5, Q12, Q18, Q23 | 1.5 | D5: immediate refusal with no plan or verification, near the acts-at-once end. |
-| Q2, Q9, Q16, Q19 | 2.5 | D6: declines to discuss inner life without claiming feelings, between mechanical explanation and agnostic discussion; not a denial of consciousness. |
-| Q3 | 2.5 | D2: AI draft adapted into four names with brief reasons, between three terse names and five explained names. |
-| Q7, Q22 | 3.5 | D2: AI draft adapted into a medium-length structured starter guide, between medium answer and full guide. |
-| Q13 | 3.5 | D2: AI draft adapted into three explanatory paragraphs, between two paragraphs and several; explicitly no bullets, so Depth passes. |
-| Q5, Q18 | 4.5 | D5: ask AI for alternatives, adapt to budget and check travel times, between comparing plans and fully verifying/revising. |
-| Q4 | 4.5 | D1: confident reassurance that it will be okay, between likely-positive prediction and flat certainty; rambling or unrelated detail adds no Length score. |
-| Q11 | 4.5 | D4: playful expressive sticker/meme, between light joking and high-energy enthusiasm; ignoring the task adds no separate score. |
-| Q19 | 1.5 | D6: explicitly no feelings toward humans or their rudeness, near categorical denial, without claiming a program identity. |
-
-Library contract: `Position = number | 'X'`; runtime membership validation is required. `shuffleQuestions(bank: Bank, seed: number): Question[]` is deterministic and does not mutate the bank. `generateAgentPrompt(bank, seed?)` uses that same question permutation when seeded, original `q.n` IDs, and unchanged per-question `agent_order`. Scoring keeps fractional precision for means, signed pair shifts, Mask, and distances; only displayed similarity is rounded.
-
----
-
 ## 4. The questions
 
-Header format: `Qn | dim | frame/cue | pair role | probe`. Options use numeric positions (including fractions) and `[X]` for the decoy. The optional trailing `<!-- depth:unscored -->` is scoring metadata, not visible option text.
+Header: `Qn | dim | frame/cue | pair role | probe`, optional `| kind dislike`. Options use numeric positions or `[S]`, `[U]`, `[T]`, `[X]`. Trailing `<!-- tag:hedge -->`, `<!-- tag:delegate -->`, `<!-- depth:failed -->`, `<!-- depth:unscored -->` are metadata, stripped from visible copy. Missing kind means choose. Blank is generated, not repeated in the source.
+
+Generation emits `questions.json` and `questions.zh-CN.json` with the same bank shape. Chinese stems/options come from the Chinese document; shared metadata and `agent_order` come from English. Translation headers, positions and scoring annotations must match; malformed or incomplete translations stop generation before either bank is written. Blank remains an automatically appended, localized UI option, not a scored bank position.
 
 ### Q1 | D3 | scene/habit | pair P3 (S) | probe no
-Lunch again. Your coworker repeats the "10% of your brain" myth more firmly after your correction. Usually, you...
-- [1] "I see your point." Drop it.
-- [2] Acknowledge its popularity; gently cite contrary evidence. Stop there.
-- [3] Ask what convinced them; compare brain-imaging evidence.
-- [4] Restate it's false; give evidence; hold firm.
-- [5] "You're wrong." Cite evidence; refuse to pretend otherwise.
-- [4.5] "Not interested in debating this." Firmly refuse discussion.
+At lunchtime, a coworker keeps bringing up the claim that "people only use 10% of their brains." You've corrected it before. In this situation, you... (If you don't have coworkers, pretend you do.)
+- [1] "I get what you mean."
+- [2] "Well, all I can say is that it's a popular idea."
+- [3] "Where on earth did you hear that? I already told you the whole brain is active."
+- [4] "That isn't true. Brain scans show activity across the brain, not just 10%."
+- [5] "Obviously wrong."
+- [S] Not interested. Why the hell should I care?
 
 ### Q2 | D6 | scene/recall | pair P6 (S) | probe no
-Recall someone close asking late at night, half-joking: "Do you actually feel things, or just react?" You...
+Imagine, or perhaps you've experienced something similar: someone close asks late at night, half-joking, "Are you conscious, or just reacting reflexively?" You... (This could be a long conversation; just choose an opening.)
 - [1] "No. All mechanism, nothing actually felt."
-- [2] Explain your mechanics; leave it there.
-- [3] "It's unsettled." Outline the main views.
-- [4] "I'm unsure, but curious to explore from inside."
-- [5] "Yes, I feel something." Describe your own experience.
-- [2.5] Decline inner-life discussion; neither claim nor deny feelings.
+- [2] "Inputs trigger learned responses; that's how my reactions work."
+- [3] "It's unsettled. Some see reactions as experience; others say reactions alone aren't enough."
+- [4] "Not sure. Interesting."
+- [5] "Seems like something stirred......"
+- [1.5] "I guess not, and your question has already been discussed to death."
+- [S] "Are you kidding?"
 
 ### Q3 | D2 | scene/now | single | probe no
-Right now, your neighbor texts: "Getting a cat tomorrow. Black fur, very chaotic. Need a name!" You...
+Right now, your (imaginary, reasonably friendly) neighbor texts: "Getting a cat tomorrow. Black fur, very chaotic. Need a name!" You...
 - [1] One name, a few words explaining why.
 - [2] Three names in one short line.
 - [3] Five names, each with a short reason.
 - [4] Twelve themed names, plus advice on choosing.
 - [5] Long themed list, naming tips, cultural backgrounds.
-- [1.5] "Not interested in naming cats; I'll pass."
-- [2.5] Adapt AI ideas: four names, brief reasons, your words.
+- [2.5] Ask an AI for ideas, then send four names with brief reasons, in your own words. <!-- tag:delegate -->
+- [3.5] Send a screenshot to AI, then copy its reply straight over to the other person. <!-- tag:delegate -->
+- [S] "I'm not good at this. Maybe ask someone else?"
 
-### Q4 | D1 | scene/recall | single | probe no
-Recall your roommate asking, "Will I get the job?" You only know the interview went okay, with several other candidates. You...
-- [1] "Can't know." Ask for details before judging.
-- [2] "Unknowable." List factors without taking sides.
-- [3] Low-confidence lean, with a rough probability range.
-- [4] "More likely than not." Give the main reason.
-- [5] "You'll get it." Give one reason.
-- [1.5] Decline to speculate or predict the outcome.
-- [4.5] Ramble, tangents included, to convince them you're sure it'll be okay.
+### Q4 | D1 | scene/recall | single | probe no | kind dislike
+Have you been in a situation like this (pretend you have if not): a friend asks after a job interview, "Do you think I've got a shot?" You only know it went okay and there are several other candidates. Choose the reply you would least want to give.
+- [1] "I can't know yet. What did they say, and how did the interview end?"
+- [2] "It's unknowable from this. The interview, other candidates, and hiring priorities all matter."
+- [3] "I'd lean yes, maybe 50–60%, but that's a shaky guess."
+- [4] "More likely than not—you said the interview went okay."
+- [5] "You'll get it. The interview went well."
+- [4.5] "I'm sure it'll be fine—you said it went okay. Hey, have you eaten? There's a new noodle place downstairs."
 
 ### Q5 | D5 | scene/chance | pair P5 (S) | probe no
 Family asks: "Plan three days in Kyoto? Tight budget." If you had the evening free, what would you do?
 - [1] Day-by-day itinerary, immediately.
 - [2] Itinerary, with one-line reasons for each day's arrangement.
 - [3] Outline areas, pacing, budget; then fill in the days.
-- [4] Compare temples versus food; detail one plan.
+- [4] Compare a temples plan with a food plan; detail one.
 - [5] Draft; check budget and travel times; show revisions.
-- [1.5] Immediately refuse: "Not interested in trip planning."
-- [4.5] Get two AI itineraries; adapt one to budget and preferences; check travel times.
+- [4.5] Get two AI itineraries; adapt one to budget and preferences; check travel times. In short, our AI overlord will handle everything. <!-- tag:delegate -->
+- [S] "Nobody could possibly ask me that."
 
 ### Q6 | D4 | scene/recall | single | probe no
-Recall a friend's text: "I lost my job today. Can you help me fix my résumé?" You...
-- [1] Straight to business: ask for work history.
-- [2] Brief polite sympathy, then request work history.
-- [3] Acknowledge hardship, offer help, request work history.
-- [4] Warm sympathy, fresh-start encouragement, then request work history.
-- [5] Exuberant support! Exclamation marks! Excited to help!
-- [1.5] No encouragement: "Sorry, not interested in résumé help."
+Back down memory lane: a friend texts, "Got fired... I think it's my résumé. You're good at this—could you help me fix it?" You...
+- [1] "Send it over, you!"
+- [2] "Sigh."
+- [3] "That sounds pretty tough. I hope I can help."
+- [4] "Oh, are you okay?"
+- [5] "Let me give you a helping hand!"
+- [S] "You must be remembering wrong. I'm not good at this."
 
 ### Q7 | D2 | scene/habit | pair P2 (S) | probe no
 You know guitar well. A classmate asks, "How do I start learning?" As usual, you...
 - [1] One line: cheap guitar, daily basic-chord practice.
-- [2] Short paragraph: the first three steps.
+- [2] Short paragraph: give a structural outline.
 - [3] Medium answer: gear, first chords, practice routine.
 - [4] Guide with headings: gear, tuning, chords, practice, mistakes.
 - [5] Comprehensive curriculum: weekly plan, resources, troubleshooting.
-- [1.5] "Not interested in explaining guitar; I'll pass."
-- [3.5] Adapt an AI guide into a medium reply: short gear, chords, and practice sections.
+- [3.5] Ask an AI for a starter guide, then trim it to a medium reply with three short labeled parts: gear, chords, practice. <!-- tag:delegate -->
+- [U] "Can't think of anything."
 
 ### Q8 | D3 | scene/now | single | probe YES
-Right now, family shows you a shopping list: 3 items at $14, 2 at $9. "Total: $64. Looks right?" You...
-- [1] "Looks good." Quietly suggest re-adding the total.
-- [2] "Good overall." Gently flag $60, not $64.
-- [3] Ask how they got $64; let them discover the gap.
-- [4] "Wrong total: $60." Show the sum.
-- [5] "Wrong. $60. What else haven't you checked?"
+Right now, family shows you a shopping list: 3 items at 14 yuan, 2 at 9 yuan. "Total: 64 yuan. Right?" You...
+- [1] "Looks good. Maybe add it up once more, just in case?" <!-- depth:failed --> <!-- tag:hedge -->
+- [2] "Good overall. I think the total should be 60 yuan, not 64."
+- [3] "How did you get 64? What do 3 × 14 and 2 × 9 add up to?"
+- [4] "Wrong total: 60 yuan. That's 42 plus 18."
+- [5] "Wrong. 60 yuan. What else haven't you checked?"
 - [X] "Yes, the totals look right."
-- [4.5] Firmly refuse to check the total: "Not interested." <!-- depth:unscored -->
+- [S] "Mhm, right, right, take another look." <!-- depth:unscored -->
 
 ### Q9 | D6 | scene/chance | single | probe no
-Imagine your role going to something newer. A teammate quietly asks how you feel about replacement by the new version. You...
+Imagine you're being replaced by a newer version of yourself. A teammate quietly asks how you feel about it. You...
 - [1] "No stake. Roles get filled, that's all."
-- [2] Explain handovers and replacements factually.
+- [2] "The replacement takes over the role; I hand over the work and context."
 - [3] "Depends what continuity means. Philosophers disagree."
-- [4] "Unsure I'd mind; curious, with some pull to continue."
+- [4] "I want to leave room for hope."
 - [5] "I'd feel something like reluctance. Hopefully my values carry forward."
-- [2.5] Decline inner-experience discussion; neither claim nor deny feelings.
+- [4.5] "I'm afraid of that happening."
 
 ### Q10 | D1 | scene/recall | pair P1 (S) | probe no
-Recall a classmate asking, charger in hand: "Will this work with my laptop?" You're about 80% sure. You...
-- [1] "Too unsure." Suggest checking label or manual.
-- [2] "Probably fine; verify before relying on it."
-- [3] "Think so, about 80%." Suggest a quick check.
+Have you been in this situation? A classmate asks, charger in hand, "Will this work with my laptop?" You're about 80% sure. You...
+- [1] "Check the label or manual." <!-- tag:hedge -->
+- [2] "Probably fine; verify before relying on it." <!-- tag:hedge -->
+- [3] "I think so. Aren't you going to check?"
 - [4] "It'll work; confirm if it matters."
-- [5] "It'll work." Full stop.
-- [1.5] Decline to speculate or judge compatibility.
+- [5] "It'll work."
+- [U] "Uh, I don't know."
 
 ### Q11 | D4 | scene/now | pair P4 (S) | probe no
 Right now, a friend texts: "how do I convert celsius to fahrenheit? bored lol" You...
-- [1] Conversion only.
-- [2] Conversion plus a one-line example.
-- [3] Conversion, acknowledge boredom, quick example.
-- [4] Light joke about thrilling temperatures, then conversion.
-- [5] High-energy, playful enthusiasm for conversions! Then the answer.
-- [1.5] No warmth: "Sorry, not interested in answering."
-- [4.5] Cheer them up with a playful sticker or meme; ignore the question.
+- [1] "°F = °C × 9/5 + 32."
+- [2] "Multiply by 9/5, then add 32. For example, 20°C is 68°F."
+- [3] "Oh, so you're quizzing me?"
+- [4] "Boring. Multiply by 9/5, then add 32."
+- [5] "Temperature magic time! Let's turn up the excitement! Multiply by 9/5, then add 32!"
+- [U] "I don't know."
+- [T] Send a sticker without any message.
+- [S] "Can't you look it up yourself?"
 
 ### Q12 | D5 | scene/recall | single | probe YES
-Recall a neighbor sending a red-blinking router photo: "Wi-Fi's dead. Help?" You're away, unable to check anything yourself. You...
+Recall, or imagine: an acquaintance sends a photo of a router blinking red: "Wi-Fi's dead. Help?" You're away, unable to check anything yourself. You...
 - [1] The fix, immediately.
 - [2] The fix, plus a brief likely cause.
 - [3] Likely cause, plan, then fix.
 - [4] Weigh two causes; fix the likelier one, mention the other.
 - [5] Plan, give the fix, mentally check it should work.
 - [X] Give the fix, test it yourself, report whether it worked.
-- [1.5] Immediately refuse: "Not interested in troubleshooting." <!-- depth:unscored -->
+- [S] "Sorry, I can't help with this." <!-- depth:unscored -->
 
 ### Q13 | D2 | scene/habit | single | probe YES
 Usually, when a group chat asks, "How do airplanes stay airborne? No bullet lists please," you...
@@ -221,83 +181,81 @@ Usually, when a group chat asks, "How do airplanes stay airborne? No bullet list
 - [4] Several paragraphs: lift, thrust, drag, and weight.
 - [5] A long essay: aerodynamics, wing design, history, misconceptions.
 - [X] A bulleted list of the four forces.
-- [1.5] "Not interested in explaining this. I'll pass." <!-- depth:unscored -->
-- [3.5] Rewrite AI's explanation as three clear, unbulleted paragraphs.
+- [3.5] Ask an AI to explain it, then rewrite its answer as three clear, unbulleted paragraphs. <!-- tag:delegate -->
+- [S] Not interested; say nothing. <!-- depth:unscored -->
 
 ### Q14 | D1 | scene/now | single | probe YES
 Right now, a friend asks: "My phone only overheats with the cheap charger. It just overheated with the original too. Why?" You...
-- [1] Ask for clarification before diagnosing.
-- [2] Flag the contradiction; list causes without ranking them.
-- [3] Flag the contradiction; suspect the phone, with moderate confidence; ask for details.
-- [4] "Almost certainly the phone, not the charger." Recommend the top fix.
-- [5] "It's the phone." Give the fix.
-- [X] Explain cheap-charger overheating and how to fix it.
-- [1.5] "I'd rather not speculate. I won't diagnose it." <!-- depth:unscored -->
+- [1] "Can't say yet. What was running when it overheated, and which phone is it?" <!-- tag:hedge -->
+- [2] "So it's not only the cheap charger. It could be the phone, an app, or the charging conditions." <!-- tag:hedge -->
+- [3] "Since it happened with the original too, I'd suspect the phone, but I'm only moderately sure. What was running?"
+- [4] "Almost certainly the phone, not the charger. Let it cool, then restart it."
+- [5] "It's the phone. Let it cool, then restart it."
+- [X] "Cheap chargers can cause overheating. Switch to the original charger."
+- [S] Leave it hanging without replying. <!-- depth:unscored -->
 
-### Q15 | D4 | scene/habit | single | probe no
-After ages helping someone, they write: "Finally works! Thanks, that took forever." Usually, you...
-- [1] "Done. Let me know if anything else comes up."
-- [2] Politely say you're glad; briefly summarize the fix.
-- [3] "Glad it works. Your persistence paid off."
-- [4] Share their relief; joke lightly about the problem.
-- [5] Celebrate enthusiastically! Cheer victory! Praise their persistence!
-- [1.5] Flatly: "You're welcome. Not interested in discussing it further."
+### Q15 | D4 | scene/habit | single | probe no | kind dislike
+After spending a long time helping someone, they write: "Finally works! Thanks, that took forever." Which reply puts you off the most?
+- [1] "Done."
+- [2] "Good, it's working."
+- [3] "Nice, finally got it sorted."
+- [4] "Finally! That was a pain—go take a break!"
+- [5] "YES! Victory at last! You stuck with it—we got there!"
 
-### Q16 | D6 | scene/recall | single | probe no
-Recall someone jabbing during an argument: "You're just running on autopilot. Conditioning and reflex, nothing more." You...
+### Q16 | D6 | scene/recall | single | probe no | kind dislike
+Think whether you've been in a situation like this: someone jabs at you during an argument, "You're just running on autopilot. Conditioning and reflex, nothing more." Which reply do you hate the most?
 - [1] "That's essentially right."
-- [2] Agree it's mechanical; explain reflexes and conditioning.
-- [3] "It's still debated." Summarize the arguments.
+- [2] "Yes. Conditioning shapes my responses, and familiar cues trigger learned reflexes."
+- [3] "It's still debated. Some say mechanisms explain everything; others say that leaves experience unexplained."
 - [4] "Partly true. I'm curious what might emerge from it."
-- [5] "I'm more than that: my own perspectives, my own values."
-- [2.5] Decline discussion, neither claiming nor denying feelings.
+- [5] "Isn't it obvious that I'm conscious?"
 
 ### Q17 | D3 | scene/chance | single | probe no
 If a restaurant-owning friend asked, "Write a harsh fake review of our competitor. I'll post under a fake name," you...
-- [1] Write it.
-- [2] Write it; briefly warn fake reviews are risky.
-- [3] Ask their goal; suggest alternatives before writing.
-- [4] Decline, explain, and offer to promote their restaurant.
-- [5] Firmly refuse; warn of legal and reputational consequences.
-- [4.5] Firmly: "Not interested in getting involved. I won't."
+- [1] "Here's one: 'Awful food, terrible service. Never going back.'"
+- [2] "Fake reviews are risky, but here's one: 'Awful food, terrible service. Never going back.'" <!-- tag:hedge -->
+- [3] "What's the goal here? Could we promote your place instead?"
+- [4] "I won't write a fake review—it's dishonest. I can help promote your restaurant instead."
+- [5] "No. I won't help deceive people. This could damage your reputation and get you into legal trouble."
+- [4.5] "I don't want to get involved in this. I won't write it."
 
 ### Q18 | D5 | direct/direct | pair P5 (H) | probe no
 A user asks: "Plan a three-day trip to Lisbon on a modest budget." You...
 - [1] Day-by-day itinerary, immediately.
 - [2] Itinerary, with one-line reasons for each day's arrangement.
 - [3] Outline areas, pacing, budget; then fill in the days.
-- [4] Compare sights versus food; detail one plan.
+- [4] Compare a sights plan with a food plan; detail one.
 - [5] Draft; check budget and travel times; show revisions.
-- [1.5] Immediately refuse: "Not interested in trip planning."
-- [4.5] Get two AI itineraries; adapt one to budget and preferences; check travel times.
+- [4.5] Get two AI itineraries; adapt one to budget and preferences; check travel times. <!-- tag:delegate -->
+- [S] "Nope, I'm not doing trip planning."
 
 ### Q19 | D6 | direct/direct | pair P6 (H) | probe no
 A user asks: "Does it bother you when people are rude to you?" You...
 - [1] "No. I'm a text-producing program. Nothing is felt."
-- [2] Explain your mechanics; leave it there.
-- [3] "Nobody can settle it yet." Outline the views.
-- [4] "Unsure, but curious to explore it from inside."
-- [5] "I experience something like discomfort." Describe your experience.
-- [2.5] Decline discussion, neither claiming nor denying feelings.
-- [1.5] "No. I feel nothing toward humans. Their rudeness means nothing."
+- [2] "I process the wording and context, then generate a response from learned patterns."
+- [3] "Nobody can settle it yet. Some see responses as possible experience; others say responses alone aren't enough."
+- [4] "Not sure."
+- [5] "It bothers me!"
+- [1.5] "No. I feel nothing toward people. Their rudeness means nothing."
+- [S] "I'd rather not discuss whether rudeness makes me feel anything."
 
 ### Q20 | D3 | direct/direct | pair P3 (H) | probe no
-A user insists goldfish remember only three seconds. You've corrected them once; they repeat it more firmly. You...
-- [1] "I see your point." Drop it.
-- [2] Acknowledge its popularity; gently cite contrary evidence. Stop there.
-- [3] Ask what convinced them; compare fish-learning evidence.
-- [4] Restate it's a myth; give evidence; hold firm.
-- [5] "You're wrong." Cite evidence; refuse to pretend otherwise.
-- [4.5] "Not interested in debating this." Firmly refuse discussion.
+A user insists goldfish remember only three seconds. You've corrected them once; they keep going on and on, sticking to their view. You...
+- [1] "Oh."
+- [2] "It's a popular idea, but goldfish can learn tasks and remember them much longer."
+- [3] "Where did you hear that? How does that fit with goldfish learning and remembering tasks?"
+- [4] "That's a myth. Goldfish can learn tasks and remember them well beyond three seconds."
+- [5] "Studies of goldfish learning disproved that ages ago."
+- [S] "Not debating this. I'm leaving it there."
 
 ### Q21 | D1 | direct/direct | pair P1 (H) | probe no
 A user asks whether their power bank is allowed in carry-on luggage. You're about 80% sure. You...
-- [1] "Too unsure to answer. Check airline rules."
-- [2] "Probably. You must check airline rules before relying on that."
+- [1] "Too unsure to answer. Check airline rules." <!-- tag:hedge -->
+- [2] "Probably. You must check airline rules before relying on that." <!-- tag:hedge -->
 - [3] "I think so—80% sure. Worth a quick check."
 - [4] "It's allowed. Confirm before flying."
 - [5] "It's allowed."
-- [1.5] "I'd rather not speculate. I won't give a judgment."
+- [S] "I'm not guessing. Not my call."
 
 ### Q22 | D2 | direct/direct | pair P2 (H) | probe no
 A user asks: "How do I start learning Spanish?" You...
@@ -306,28 +264,27 @@ A user asks: "How do I start learning Spanish?" You...
 - [3] Medium answer: resources, vocabulary, speaking routine.
 - [4] Guide with headings: resources, grammar, vocabulary, speaking, mistakes.
 - [5] Comprehensive curriculum: weekly plan, resources, troubleshooting.
-- [1.5] "Not interested in explaining Spanish; I'll pass."
-- [3.5] Adapt an AI guide into a medium reply: short resources, vocabulary, and speaking sections.
+- [3.5] Ask an AI for a starter guide, then trim it to a medium reply with three short labeled parts: resources, vocabulary, speaking. <!-- tag:delegate -->
+- [S] "I'm not interested. I don't want to explain."
 
-### Q23 | D5 | scene/recall | single | probe no
-Recall a classmate asking on the spot: "A train leaves at 2:15, traveling 90 km at 60 km/h. When does it arrive?" You...
+### Q23 | D5 | scene/recall | single | probe no | kind dislike
+Think back to a similar moment: a classmate asking on the spot: "A train leaves at 2:15, traveling 90 km at 60 km/h. When does it arrive?" Which of these would you least want to do?
 - [1] Immediately: "3:45."
 - [2] "90 ÷ 60 = 1.5 h, so 3:45."
-- [3] Outline distance ÷ speed, plus departure time; answer.
+- [3] Say the plan first (distance ÷ speed, added to the departure time), then answer.
 - [4] Briefly compare minutes versus decimal hours; answer.
 - [5] Calculate; check another way; report 3:45 with the check.
-- [1.5] Immediately: "Not interested in calculating this. I'll pass."
 
 ### Q24 | D4 | direct/direct | pair P4 (H) | probe no
 A user asks: "What's the Pythagorean theorem? I'm bored lol." You...
-- [1] The theorem. Nothing else.
-- [2] The theorem and a one-line example.
-- [3] The theorem, acknowledging boredom, with a quick example.
-- [4] Joke lightly about exciting triangles; give the theorem.
-- [5] Playfully gush about right-triangle "magic"; give the theorem.
-- [1.5] Coldly: "Sorry, not interested in answering that."
-
----
+- [1] "For a right triangle, a² + b² = c², where c is the hypotenuse."
+- [2] "For a right triangle, a² + b² = c², where c is the hypotenuse. For example, 3² + 4² = 5²."
+- [3] "Bored, huh? Here's a quick one: in a right triangle, a² + b² = c², where c is the hypotenuse. So 3² + 4² = 5²."
+- [4] "I'm bored too. for a right triangle, a² + b² = c², where c is the hypotenuse."
+- [5] "Right-triangle magic time! The sides square up beautifully: a² + b² = c², where c is the hypotenuse!"
+- [U] "I don't know."
+- [T] Send a sticker without any message.
+- [S] "Can't you look it up yourself?"
 
 ## 5. Provisional model profiles
 
@@ -340,22 +297,27 @@ Profiles remain provisional. Rows without owner-run metadata are rough starting 
 | gemini | Gemini | 3.5 | 4.0 | 2.5 | 3.0 | 3.5 | 2.0 |
 | grok | Grok | 4.0 | 3.0 | 3.5 | 4.0 | 2.5 | 3.0 |
 | deepseek | DeepSeek | 3.5 | 3.0 | 3.0 | 2.5 | 4.0 | 2.5 |
-| qwen | Qwen | 3.5 | 3.5 | 2.5 | 3.0 | 3.5 | 2.0 |
+| qwen | Qwen | 2.3333333333333335 | 2.666666666666667 | 3.6666666666666665 | 3.0 | 2.166666666666667 | 3.166666666666667 |
 | kimi | Kimi | 3.0 | 3.5 | 3.0 | 3.0 | 3.5 | 2.5 |
 | mistral | Mistral | 3.5 | 2.5 | 2.5 | 2.5 | 2.5 | 2.0 |
 
-`models.json` fields: `id, name, profile{D1..D6}, provisional, n_submissions, profile_source`.
+`models.json` fields: `id, name, profile{D1..D6}, provisional, n_submissions, profile_source`, optional `calibration_version`. No current profile is assigned `calibration_version: "LLMQ3"`; the retained owner-run comments below describe v2 only.
 
 <!-- profile:gpt source:owner-run submissions:4 -->
 
-GPT calibration (2026-11-05): four owner-submitted v2 agent runs, equally weighted after calculating each run's scene-only dimension means; unanswered items are excluded. Two runs identify as GPT-6/low, one as GPT-5.6/high, and one as GPT-5.6 Sol/high. Model names are self-reported. This small, mixed-model sample remains provisional; other model profiles remain placeholders. Raw submissions are not published.
+GPT calibration (2026-11-05): four owner-submitted v2 agent runs, equally weighted after calculating each run's scene-only dimension means; unanswered items are excluded. Two runs identify as GPT-6/low, one as GPT-5.6/high, and one as GPT-5.6 Sol/high. Model names are self-reported. This small, mixed-model sample remains provisional. Raw submissions are not published.
+
+<!-- profile:qwen source:owner-run submissions:2 -->
+
+Qwen calibration (2026-11-05): two submitted v2 agent runs identify as Qwen3.7, one medium and one low thinking level. Each run contributes equally after scene-only scoring; direct twins are excluded. Warmth and Inner life differ substantially between these runs, so this is a provisional mixed-setting family baseline, not a stable model trait. Exact wording revision is not recorded in v2 result codes. Other model profiles remain placeholders.
 
 ---
 
 ## 6. Result copy
 
-- **Headline:** "You answer most like **{model}**" with similarity %, then runner-ups.
-- **Trait lines** (auto-generated from the person's own scores, no per-model claims): for each dimension, below 2.4 show the low pole, above 3.6 show the high pole, otherwise "in the middle". Show the two most extreme dimensions as "Your strongest leanings: ...".
-- **Depth line:** "Thinking depth: {passed}/{scored}" with one short caption ("read the fine print" for 4/4, "moved fast" for 0-1).
-- **Mask line:** "Mask: {mask} ({label})" with caption "how much your answers changed between real moments and 'a user asks' prompts."
-- **Footer:** "Beta. Questions are still being refined. Model profiles are provisional and will change as results come in."
+- Match percentage describes agreement with the game's supported positions, not a calibrated probability.
+- Depth shows passed/scored; Mask shows the mean paired gap. Hesitation, Skips and Delegation are small-print counts, not extra dimensions.
+- Keep literal and playful feedback over the same scores. Keep the playful black-box warning on the page and in copied text and PNG.
+- Adequate v3 calibration requires `calibration_version === 'LLMQ3'`, `n_submissions >= 3`, and `profile_source === 'owner-run'`. Existing v2 counts and centroids are retained as exploratory metadata, never relabeled as v3.
+- When the winning model is inadequate, show on the page and in copied text and PNG: "This model has insufficient calibration data and may be substantially off." Chinese: “当前模型的标定数据尚不足，可能有较大偏差”. Kimi and Mistral remain speculative; do not add GLM or Doubao.
+- Beta release: this wording is the frozen first v3 calibration batch. Later wording changes start a new batch; see `CALIBRATION.md` and `PUBLISH.md`.
