@@ -215,7 +215,9 @@ export async function createResultImage(
 		235,
 	);
 	label(url, 48, 714, 18, color.accent, 500, 1100);
-	label(s.imageFooter, 48, 742, 14, color.muted);
+	label(s.imageFooter, 48, 742, 14, color.muted, 400, 820);
+	ctx.textAlign = 'right';
+	label(text(s.imageVersion, { version: bank.version }), 1152, 742, 18, color.accent, 500, 260);
 	const { promise, resolve, reject } = Promise.withResolvers<Blob>();
 	canvas.toBlob(
 		(blob) => (blob ? resolve(blob) : reject(new Error('PNG unavailable'))),

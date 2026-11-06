@@ -72,3 +72,7 @@ Deploy the updated Worker validator **before** the frontend to retain optional `
 - Keep `LLMQ3p`/`LLMQ3a`: all published positions and agent letters retain their meanings. Q5 A–G remain `[4,5,3,1,2,4.5,S]`, with H newly assigned R; Z remains blank. Deploy the compatible Worker before the frontend. Existing records and counter/ledger identities stay untouched.
 - This starts wording batch `v3-q5-refusal-q17-closest-friend`. Existing model anchors were measured before this wording change and remain exploratory references, not fresh validation of the revised prompts. Save the exact prompt and release commit for new calibration; do not silently pool wording batches.
 - Verification covers old-letter decoding, refusal exclusions/counting, valid Q5 and invalid Q17 R ingestion, isolated KV readback, bilingual rendered questions and unchanged existing question mappings.
+
+## Result-image version label
+
+Saved and copied PNGs show a localized quiz-version label at the lower right of the footer, derived from the active question bank's `version` (currently `LLMQ v3`). Both literal and playful presentations use the same renderer. This is the quiz format's major version, not a model version or wording-batch identifier; the Q5/Q17 wording boundary above still applies. Verify English and Chinese exports visually when changing the footer.

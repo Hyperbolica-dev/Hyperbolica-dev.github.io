@@ -161,6 +161,7 @@ export const strings: QuizStrings = {
 	imageDepth: '思考深度',
 	imageMask: '面具',
 	imageFooter: '仅限本次作答 · 暂定的小样本模型数据 · 表面风格，不是心理测量',
+	imageVersion: '测试版本：LLMQ v{version}',
 	polesDetails: '了解六个维度',
 	questionEyebrow: '选择你实际会给出的回答',
 	dislikeEyebrow: '选择你最反感的回答',

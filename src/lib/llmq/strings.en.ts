@@ -162,6 +162,7 @@ export const strings = {
 	imageMask: 'Mask',
 	imageFooter:
 		'Current sitting only · Small provisional model samples · Surface style, not psychology',
+	imageVersion: 'Quiz version: LLMQ v{version}',
 	polesDetails: 'Explore the six dimensions',
 	questionEyebrow: 'Choose the response you would actually give',
 	dislikeEyebrow: 'Choose the response you dislike most',
